@@ -5,18 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>방장.net (Bangjang.net) - 세상의 모든 방장을 위한 올인원 모임 툴킷</title>
   
-  <!-- SEO & 소셜 미디어 메타 태그 (카카오톡, 페이스북 등) -->
+  <!-- SEO & 소셜 미디어 메타 태그 (카카오톡, 네이버, 구글 등) -->
   <meta name="description" content="오픈채팅, 소모임, 스터디, 동아리 방장들을 위한 올인원 관리 & 오락 툴킷! 카톡 공지 생성, 1/N 회비 정산, 뽀모도로 스터디룸, 미니 클래스룸, 룰렛 무료 제공.">
   <meta name="keywords" content="방장, 방장.net, 모임관리, 카톡공지생성기, 더치페이계산기, 1/N정산, 뽀모도로스터디룸, 화이트노이즈, 미니클래스룸, 룰렛, 사다리타기, 조짜기, 오픈채팅">
   <meta property="og:title" content="👑 방장.net - 세상의 모든 방장을 위한 올인원 모임 툴킷">
   <meta property="og:description" content="공지 작성, 1/N 정산, 뽀모도로 스터디룸, 학급 과제방, 파티 게임까지 클릭 한 번으로 해결하세요.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://방장.net">
-  <meta property="og:image" content="assets/images/og-image.jpg">
+  <meta property="og:url" content="https://www.bangjang.net">
+  <meta property="og:image" content="https://www.bangjang.net/assets/images/og-image.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="👑 방장.net - 올인원 모임 툴킷">
   <meta name="twitter:description" content="카톡 공지 생성, 1/N 회비 정산, 뽀모도로 스터디룸, 미니 클래스룸, 룰렛 무료 제공">
-  <meta name="twitter:image" content="assets/images/og-image.jpg">
+  <meta name="twitter:image" content="https://www.bangjang.net/assets/images/og-image.jpg">
+
+  <!-- JSON-LD 검색엔진 구조화 데이터 (Schema.org) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "방장.net",
+    "url": "https://www.bangjang.net",
+    "description": "세상의 모든 방장을 위한 올인원 모임 관리 & 파티 유틸리티 툴킷",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "KRW"
+    }
+  }
+  </script>
 
   <!-- PWA 매니페스트 및 테마 컬러 -->
   <link rel="manifest" href="manifest.json">
@@ -30,6 +48,8 @@
 
   <!-- Supabase JS 공식 SDK (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 카카오톡 공식 SDK (CDN) -->
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
 </head>
 <body>
 
@@ -43,7 +63,12 @@
         <span>방장<span style="color: var(--primary); font-weight: 900;">.net</span></span>
         <span class="brand-badge">PRO 툴킷</span>
       </a>
-      <span class="header-tagline">"모임 주최자·총대·방장님들의 필수 작업 도구함"</span>
+
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <button class="btn btn-sm btn-secondary" onclick="BangjangVault.open()">
+          📁 내 활동 보관함
+        </button>
+      </div>
     </div>
   </header>
 
@@ -55,8 +80,8 @@
       <li><button class="nav-tab-btn active" data-tab="hub" onclick="switchTab('hub')">🏠 전체 도구 허브</button></li>
       <li><button class="nav-tab-btn" data-tab="notice" onclick="switchTab('notice')">📢 스마트 공지 생성기</button></li>
       <li><button class="nav-tab-btn" data-tab="splitter" onclick="switchTab('splitter')">💰 1/N 회비 정산기</button></li>
-      <li><button class="nav-tab-btn" data-tab="study" onclick="switchTab('study')">⏳ 뽀모도로 스터디룸 <span class="badge-new">NEW</span></button></li>
-      <li><button class="nav-tab-btn" data-tab="classroom" onclick="switchTab('classroom')">🎓 미니 클래스룸 <span class="badge-new">NEW</span></button></li>
+      <li><button class="nav-tab-btn" data-tab="study" onclick="switchTab('study')">⏳ 뽀모도로 스터디룸</button></li>
+      <li><button class="nav-tab-btn" data-tab="classroom" onclick="switchTab('classroom')">🎓 미니 클래스룸</button></li>
       <li><button class="nav-tab-btn" data-tab="poll" onclick="switchTab('poll')">🗳️ 실시간 익명 투표함</button></li>
       <li><button class="nav-tab-btn" data-tab="roulette" onclick="switchTab('roulette')">🎯 벌칙 & 메뉴 룰렛</button></li>
       <li><button class="nav-tab-btn" data-tab="team" onclick="switchTab('team')">👥 조짜기 & 순서 뽑기</button></li>
@@ -77,7 +102,6 @@
       </div>
 
       <div class="hub-card-grid">
-        <!-- 공지 생성기 카드 -->
         <div class="hub-card" onclick="switchTab('notice')">
           <div>
             <div class="hub-card-icon">📢</div>
@@ -90,7 +114,6 @@
           </div>
         </div>
 
-        <!-- 1/N 정산기 카드 -->
         <div class="hub-card" onclick="switchTab('splitter')">
           <div>
             <div class="hub-card-icon">💰</div>
@@ -103,7 +126,6 @@
           </div>
         </div>
 
-        <!-- 뽀모도로 스터디룸 카드 -->
         <div class="hub-card" onclick="switchTab('study')">
           <div>
             <div class="hub-card-icon">⏳</div>
@@ -116,7 +138,6 @@
           </div>
         </div>
 
-        <!-- 미니 클래스룸 카드 -->
         <div class="hub-card" onclick="switchTab('classroom')">
           <div>
             <div class="hub-card-icon">🎓</div>
@@ -129,7 +150,6 @@
           </div>
         </div>
 
-        <!-- 익명 투표 및 질문함 카드 -->
         <div class="hub-card" onclick="switchTab('poll')">
           <div>
             <div class="hub-card-icon">🗳️</div>
@@ -141,7 +161,6 @@
           </div>
         </div>
 
-        <!-- 룰렛 게임 카드 -->
         <div class="hub-card" onclick="switchTab('roulette')">
           <div>
             <div class="hub-card-icon">🎯</div>
@@ -153,7 +172,6 @@
           </div>
         </div>
 
-        <!-- 조짜기 / 순서 뽑기 카드 -->
         <div class="hub-card" onclick="switchTab('team')">
           <div>
             <div class="hub-card-icon">👥</div>
@@ -165,7 +183,6 @@
           </div>
         </div>
 
-        <!-- 사다리 타기 카드 -->
         <div class="hub-card" onclick="switchTab('ladder')">
           <div>
             <div class="hub-card-icon">🪜</div>
@@ -175,6 +192,13 @@
           <div class="hub-card-footer">
             <span>사다리 시작 →</span>
           </div>
+        </div>
+      </div>
+
+      <!-- 구글 애드센스 광고 슬롯 (홈 하단) -->
+      <div class="adsense-slot" style="margin-top: 2rem;">
+        <div class="adsense-placeholder">
+          <span>📢 Google AdSense 광고 영역 (심사 승인 후 자동 송출)</span>
         </div>
       </div>
     </section>
@@ -307,7 +331,7 @@
       </div>
     </section>
 
-    <!-- [TAB 4] 뽀모도로 스터디룸 (신규 추가) -->
+    <!-- [TAB 4] 뽀모도로 스터디룸 -->
     <section id="panel-study" class="tab-panel">
       <div class="section-header">
         <h1 class="section-title">⏳ 뽀모도로 온라인 스터디룸</h1>
@@ -315,18 +339,15 @@
       </div>
 
       <div class="grid-2col">
-        <!-- 뽀모도로 타이머 & 사운드 플레이어 -->
         <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
           <div id="studyModeBadge" class="badge-new" style="background: var(--primary); font-size: 0.88rem; padding: 0.35rem 1rem; margin-bottom: 1.5rem;">
             🔥 뽀모도로 집중 시간
           </div>
 
-          <!-- 대형 디지털 타이머 디스플레이 -->
           <div id="studyTimerDisplay" style="font-size: 4.5rem; font-weight: 900; letter-spacing: -0.03em; color: #ffffff; font-family: 'Consolas', monospace; margin-bottom: 1.5rem; text-shadow: 0 0 25px rgba(99, 102, 241, 0.4);">
             25:00
           </div>
 
-          <!-- 타이머 컨트롤 버튼 -->
           <div style="display: flex; gap: 0.75rem; width: 100%; max-width: 360px; margin-bottom: 1.5rem;">
             <button id="btnToggleTimer" class="btn btn-gold" style="flex: 2; font-size: 1.05rem;" onclick="StudyRoom.toggleTimer()">
               ▶️ 타이머 시작
@@ -336,14 +357,12 @@
             </button>
           </div>
 
-          <!-- 프리셋 버튼 -->
           <div style="display: flex; gap: 0.4rem; margin-bottom: 2rem;">
             <button class="btn btn-sm btn-secondary" onclick="StudyRoom.setPreset(25, 5)">25분/5분 (표준)</button>
             <button class="btn btn-sm btn-secondary" onclick="StudyRoom.setPreset(50, 10)">50분/10분 (몰입)</button>
             <button class="btn btn-sm btn-secondary" onclick="StudyRoom.setPreset(15, 3)">15분 (빠른 집중)</button>
           </div>
 
-          <!-- 힐링 사운드 바 -->
           <div style="width: 100%; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.5rem;">
             <div style="font-size: 0.9rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 0.75rem;">
               🎧 힐링 화이트 노이즈 (무료 재생)
@@ -360,7 +379,6 @@
           </div>
         </div>
 
-        <!-- 오늘의 집중 목표 (To-Do) -->
         <div class="glass-card">
           <div class="card-header">
             <h2 class="card-title">🎯 오늘의 집중 목표 선언</h2>
@@ -386,7 +404,7 @@
       </div>
     </section>
 
-    <!-- [TAB 5] 미니 클래스룸 (신규 추가) -->
+    <!-- [TAB 5] 미니 클래스룸 -->
     <section id="panel-classroom" class="tab-panel">
       <div class="section-header">
         <h1 class="section-title">🎓 선생님 전용 미니 클래스룸</h1>
@@ -628,7 +646,7 @@
   </main>
 
   <!-- ==========================================================================
-       4. 모달 뷰어 (영수증 모달, 투표 모달, 클래스룸 모달, 약관 모달)
+       4. 모달 뷰어 컨테이너 (영수증, 투표, 클래스룸, 내 보관함, 약관)
        ========================================================================== -->
   <!-- 웹 영수증 뷰어 모달 -->
   <div id="billViewerModal" class="modal-overlay" style="display: none;">
@@ -643,6 +661,34 @@
   <!-- 미니 클래스룸 뷰어 모달 -->
   <div id="classViewerModal" class="modal-overlay" style="display: none;">
     <div class="modal-container" id="classViewerContent"></div>
+  </div>
+
+  <!-- [신규] 방장 전용 내 활동 보관함 (My Vault) 모달 -->
+  <div id="vaultModal" class="modal-overlay" style="display: none;">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="glass-card" style="background: #1e293b; color: #f8fafc; border-radius: 20px; padding: 1.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.85rem; margin-bottom: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.4rem;">📁</span>
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: #ffffff;">방장님의 활동 보관함</h3>
+          </div>
+          <button class="btn btn-sm btn-danger-outline" onclick="BangjangVault.clearAll()">전체 비우기</button>
+        </div>
+
+        <!-- 탭 필터 -->
+        <div style="display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap;">
+          <button class="btn btn-sm vault-filter-btn btn-primary" data-filter="all" onclick="BangjangVault.render('all')">전체</button>
+          <button class="btn btn-sm vault-filter-btn btn-secondary" data-filter="bill" onclick="BangjangVault.render('bill')">💰 영수증</button>
+          <button class="btn btn-sm vault-filter-btn btn-secondary" data-filter="poll" onclick="BangjangVault.render('poll')">🗳️ 투표함</button>
+          <button class="btn btn-sm vault-filter-btn btn-secondary" data-filter="class" onclick="BangjangVault.render('class')">🎓 클래스룸</button>
+        </div>
+
+        <!-- 보관 항목 리스트 -->
+        <div id="vaultListContainer" style="max-height: 380px; overflow-y: auto;"></div>
+
+        <button class="btn btn-secondary btn-block" style="margin-top: 1.25rem;" onclick="BangjangVault.close()">닫기</button>
+      </div>
+    </div>
   </div>
 
   <!-- 이용약관 & 개인정보처리방침 모달 (애드센스 승인 필수 요소) -->
@@ -683,6 +729,8 @@
        7. 모듈형 스크립트 연결 (순서 중요)
        ========================================================================== -->
   <script src="js/supabase-config.js"></script>
+  <script src="js/kakao-share.js"></script>
+  <script src="js/vault.js"></script>
   <script src="js/sound-generator.js"></script>
   <script src="js/app.js"></script>
   <script src="js/bill-viewer.js"></script>
@@ -693,14 +741,17 @@
   <script src="js/splitter.js"></script>
   <script src="js/games.js"></script>
 
-  <!-- PWA 서비스 워커 등록 스크립트 -->
+  <!-- PWA 서비스 워커 및 카카오 SDK 초기화 -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js').catch(err => {
-          console.log('PWA ServiceWorker 등록 생략(로컬/미지원 환경):', err);
+          console.log('PWA ServiceWorker 등록 생략(로컬/미지원):', err);
         });
       });
+    }
+    if (window.KakaoShareHelper) {
+      KakaoShareHelper.init();
     }
   </script>
 </body>

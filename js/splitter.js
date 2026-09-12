@@ -7,6 +7,7 @@
  * 2. 참석자별 맞춤 금액 자동 분할 계산
  * 3. 계좌번호 및 간편 송금 링크 포함 카카오톡 송금 안내문 생성
  * 4. [Supabase 연동] 고유 웹 영수증 공유 링크 생성 및 실시간 입금 체크 연계
+ * 5. [내 보관함 연동] 생성된 영수증 자동 아카이빙
  */
 
 const BillSplitter = {
@@ -221,6 +222,11 @@ const BillSplitter = {
         account: data.account,
         payLink: data.payLink
       });
+
+      // 내 보관함에 자동 아카이빙
+      if (window.BangjangVault) {
+        BangjangVault.add('bill', billId, '모임 회비 1/N 정산', `총액: ${data.totalAmount.toLocaleString()}원 (1인당 ${data.perPerson.toLocaleString()}원)`);
+      }
 
       const shareUrl = `${window.location.origin}${window.location.pathname}?bill=${billId}`;
       await copyToClipboardHelper(shareUrl, '웹 영수증 링크가 생성 & 복사되었습니다! 카톡에 공유해보세요.');

@@ -7,15 +7,12 @@
  * 2. 모바일 친화적 디지털 영수증 렌더링
  * 3. 계좌번호 복사 & 카카오페이/토스 원클릭 송금
  * 4. "나 입금했어요! 🙋‍♂️" 실시간 입금 완료 체크 기능
+ * 5. 카카오톡 공식 공유 연계
  */
 
 const BillViewer = {
   currentBill: null,
 
-  /**
-   * 영수증 로드 및 모달 뷰어 열기
-   * @param {string} billId - 영수증 UUID
-   */
   async loadBill(billId) {
     const modal = document.getElementById('billViewerModal');
     const content = document.getElementById('billViewerContent');
@@ -46,9 +43,6 @@ const BillViewer = {
     }
   },
 
-  /**
-   * 영수증 UI 렌더링
-   */
   render(bill) {
     const content = document.getElementById('billViewerContent');
     if (!content) return;
@@ -65,14 +59,12 @@ const BillViewer = {
 
     let html = `
       <div class="kakao-preview-card" style="background: #ffffff; color: #1e293b; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 1.75rem;">
-        <!-- 상단 헤더 -->
         <div style="text-align: center; border-bottom: 2px dashed #e2e8f0; padding-bottom: 1.2rem; margin-bottom: 1.2rem;">
           <span style="font-size: 1.8rem;">👑</span>
           <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-top: 0.3rem;">${bill.title || '모임 회비 정산 영수증'}</h2>
           <span style="font-size: 0.8rem; color: #64748b;">${createdDate} · 방장.net</span>
         </div>
 
-        <!-- 1인당 정산 금액 강조 박스 -->
         <div style="background: linear-gradient(135deg, #eef2ff, #f8fafc); border: 1px solid #c7d2fe; border-radius: 14px; padding: 1.2rem; text-align: center; margin-bottom: 1.2rem;">
           <span style="font-size: 0.88rem; color: #4f46e5; font-weight: 700;">🎯 1인당 보내실 금액</span>
           <div style="font-size: 2rem; font-weight: 900; color: #1e1b4b; margin: 0.2rem 0;">
@@ -81,7 +73,6 @@ const BillViewer = {
           <span style="font-size: 0.8rem; color: #64748b;">총 지출: ${(bill.total_amount || 0).toLocaleString()}원 (${members.length}명 분할)</span>
         </div>
 
-        <!-- 차수별 지출 내역 -->
         <div style="margin-bottom: 1.2rem;">
           <h4 style="font-size: 0.92rem; color: #475569; font-weight: 700; margin-bottom: 0.5rem;">📋 지출 상세 내역</h4>
           <div style="background: #f8fafc; border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.88rem;">
@@ -94,7 +85,6 @@ const BillViewer = {
           </div>
         </div>
 
-        <!-- 송금 안내 및 버튼 -->
         <div style="margin-bottom: 1.5rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 1rem;">
           <div style="font-size: 0.85rem; font-weight: 700; color: #92400e; margin-bottom: 0.4rem;">🏦 입금 계좌번호</div>
           <div style="font-size: 1.05rem; font-weight: 800; color: #78350f; word-break: break-all; margin-bottom: 0.6rem;">
@@ -106,7 +96,6 @@ const BillViewer = {
           </div>
         </div>
 
-        <!-- 실시간 입금 확인 체크 영역 -->
         <div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
             <h4 style="font-size: 0.92rem; color: #475569; font-weight: 700;">🙋‍♂️ 입금 확인 (${paidMembers.length}/${members.length}명 완료)</h4>
@@ -127,10 +116,9 @@ const BillViewer = {
           </div>
         </div>
 
-        <!-- 닫기 & 공유 버튼 -->
         <div style="margin-top: 1.75rem; display: flex; gap: 0.5rem;">
           <button class="btn btn-secondary" style="flex: 1;" onclick="BillViewer.closeModal()">닫기</button>
-          <button class="btn btn-gold" style="flex: 2;" onclick="BillViewer.shareLink()">🔗 이 영수증 링크 복사</button>
+          <button class="btn btn-gold" style="flex: 2;" onclick="BillViewer.shareLink()">🔗 카카오톡/링크 공유</button>
         </div>
       </div>
     `;
@@ -138,9 +126,6 @@ const BillViewer = {
     content.innerHTML = html;
   },
 
-  /**
-   * 입금 완료 상태 토글 (클릭 시 실시간 DB 업데이트)
-   */
   async togglePaid(memberName) {
     if (!this.currentBill) return;
 
@@ -163,22 +148,19 @@ const BillViewer = {
     }
   },
 
-  /**
-   * 영수증 고유 링크 클립보드 복사
-   */
   shareLink() {
     if (!this.currentBill) return;
     const url = `${window.location.origin}${window.location.pathname}?bill=${this.currentBill.id}`;
-    copyToClipboardHelper(url, '영수증 공유 링크가 복사되었습니다! 카톡에 공유하세요.');
+    if (window.KakaoShareHelper) {
+      KakaoShareHelper.share('bill', this.currentBill.title, `1인당 금액: ${(this.currentBill.per_person || 0).toLocaleString()}원`, url);
+    } else {
+      copyToClipboardHelper(url, '영수증 공유 링크가 복사되었습니다! 카톡에 공유하세요.');
+    }
   },
 
-  /**
-   * 모달 닫기
-   */
   closeModal() {
     const modal = document.getElementById('billViewerModal');
     if (modal) modal.style.display = 'none';
-    // URL 파라미터 정리
     const url = new URL(window.location);
     url.searchParams.delete('bill');
     window.history.pushState({}, '', url);

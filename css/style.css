@@ -717,3 +717,27 @@ body {
   overflow-y: auto;
   margin: auto;
 }
+
+/* --- 15. 구글 애드센스 배너 영역 --- */
+.adsense-slot {
+  width: 100%;
+  margin: 1.5rem auto;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}
+
+.adsense-placeholder {
+  width: 100%;
+  max-width: 970px;
+  min-height: 90px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-sub);
+  font-size: 0.82rem;
+  padding: 0.5rem;
+}

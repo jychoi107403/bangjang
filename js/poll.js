@@ -6,6 +6,7 @@
  * 1. 객관식 투표 / 익명 질문함(AMA) 1분 만에 개설 및 DB 저장
  * 2. 고유 URL(?poll=UUID) 기반 참여 뷰어 및 실시간 응답 제출
  * 3. 실시간 투표 집계 막대 그래프 및 질문 목록 렌더링
+ * 4. 내 보관함 자동 아카이빙
  */
 
 const PollManager = {
@@ -13,13 +14,9 @@ const PollManager = {
   currentResponses: [],
 
   init() {
-    // 기본 선택지 렌더링
     this.renderOptionInputs();
   },
 
-  /**
-   * 투표 유형 변경 핸들러
-   */
   onTypeChange() {
     const type = document.getElementById('pollTypeSelect')?.value || 'vote';
     const optionsGroup = document.getElementById('pollOptionsGroup');
@@ -34,9 +31,6 @@ const PollManager = {
     }
   },
 
-  /**
-   * 선택지 입력창 기본 3개 렌더링
-   */
   renderOptionInputs() {
     const container = document.getElementById('pollOptionsContainer');
     if (!container) return;
@@ -50,9 +44,6 @@ const PollManager = {
     `;
   },
 
-  /**
-   * 선택지 추가
-   */
   addOptionInput() {
     const container = document.getElementById('pollOptionsContainer');
     if (!container) return;
@@ -68,9 +59,6 @@ const PollManager = {
     div.appendChild(input);
   },
 
-  /**
-   * [방 개설] 투표/질문함 생성 및 Supabase 저장
-   */
   async createPoll() {
     const title = (document.getElementById('pollTitleInput')?.value || '').trim();
     const desc = (document.getElementById('pollDescInput')?.value || '').trim();
@@ -104,10 +92,14 @@ const PollManager = {
         options
       });
 
+      // 내 보관함에 아카이빙
+      if (window.BangjangVault) {
+        BangjangVault.add('poll', pollId, title, type === 'vote' ? '객관식 투표' : '익명 Q&A');
+      }
+
       const shareUrl = `${window.location.origin}${window.location.pathname}?poll=${pollId}`;
       await copyToClipboardHelper(shareUrl, '투표함 링크가 생성 & 복사되었습니다! 카톡에 공유하세요.');
 
-      // 바로 뷰어 열기
       this.loadPoll(pollId);
     } catch (err) {
       console.error('투표함 생성 실패:', err);
@@ -115,9 +107,6 @@ const PollManager = {
     }
   },
 
-  /**
-   * [참여 뷰어] 고유 URL로 접속 시 모달 뷰어 띄우기
-   */
   async loadPoll(pollId) {
     const modal = document.getElementById('pollViewerModal');
     const content = document.getElementById('pollViewerContent');
@@ -148,9 +137,6 @@ const PollManager = {
     }
   },
 
-  /**
-   * 투표/질문함 참여 뷰어 화면 렌더링
-   */
   renderViewer(poll, responses) {
     const content = document.getElementById('pollViewerContent');
     if (!content) return;
@@ -158,7 +144,6 @@ const PollManager = {
     const isVote = poll.poll_type === 'vote';
     const totalCount = responses.length;
 
-    // 투표 집계 계산
     const counts = {};
     if (isVote && Array.isArray(poll.options)) {
       poll.options.forEach(opt => counts[opt] = 0);
@@ -171,7 +156,6 @@ const PollManager = {
 
     let html = `
       <div class="glass-card" style="background: #1e293b; color: #f8fafc; border-radius: 20px; padding: 1.75rem;">
-        <!-- 헤더 -->
         <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span class="badge-new" style="background: var(--primary);">${isVote ? '🗳️ 익명 투표' : '💬 익명 건의/질문함'}</span>
@@ -181,7 +165,6 @@ const PollManager = {
           ${poll.description ? `<p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.3rem;">${poll.description}</p>` : ''}
         </div>
 
-        <!-- 1. 객관식 투표 영역 -->
         ${isVote ? `
           <div style="margin-bottom: 1.5rem;">
             <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 0.8rem;">
@@ -195,7 +178,6 @@ const PollManager = {
                   <div 
                     style="position: relative; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.85rem 1rem; cursor: pointer; overflow: hidden; transition: all 0.2s;"
                     onclick="PollManager.submitVote('${opt.replace(/'/g, "\\'")}')">
-                    <!-- 투표 득표율 막대 배경 -->
                     <div style="position: absolute; top: 0; left: 0; bottom: 0; width: ${percent}%; background: rgba(99, 102, 241, 0.25); z-index: 1;"></div>
                     <div style="position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem;">
                       <span style="font-weight: 600;">${opt}</span>
@@ -207,7 +189,6 @@ const PollManager = {
             </div>
           </div>
         ` : `
-          <!-- 2. 익명 Q&A 질문/건의 작성 영역 -->
           <div style="margin-bottom: 1.5rem;">
             <div class="form-group">
               <label class="form-label">익명으로 질문 또는 한마디 남기기</label>
@@ -218,7 +199,6 @@ const PollManager = {
             </button>
           </div>
 
-          <!-- 등록된 질문/메시지 목록 -->
           <div>
             <h4 style="font-size: 0.92rem; color: var(--text-muted); margin-bottom: 0.6rem;">💬 등록된 익명 메시지 (${responses.length}개)</h4>
             <div style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;">
@@ -232,7 +212,6 @@ const PollManager = {
           </div>
         `}
 
-        <!-- 하단 버튼 -->
         <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
           <button class="btn btn-secondary" style="flex: 1;" onclick="PollManager.closeModal()">닫기</button>
           <button class="btn btn-gold" style="flex: 2;" onclick="PollManager.shareLink()">🔗 투표 링크 복사</button>
@@ -243,24 +222,18 @@ const PollManager = {
     content.innerHTML = html;
   },
 
-  /**
-   * 객관식 투표 제출
-   */
   async submitVote(choice) {
     if (!this.currentPoll) return;
     try {
       await BangjangDB.submitPollResponse(this.currentPoll.id, choice, null);
       showToast(`'${choice}'에 투표 완료되었습니다!`, '🎉');
-      this.loadPoll(this.currentPoll.id); // 실시간 재조회
+      this.loadPoll(this.currentPoll.id);
     } catch (err) {
       console.error('투표 제출 실패:', err);
       showToast('투표 제출에 실패했습니다.', '⚠️');
     }
   },
 
-  /**
-   * 익명 Q&A 질문 등록
-   */
   async submitQna() {
     if (!this.currentPoll) return;
     const content = (document.getElementById('qnaContentInput')?.value || '').trim();
@@ -279,18 +252,16 @@ const PollManager = {
     }
   },
 
-  /**
-   * 링크 공유
-   */
   shareLink() {
     if (!this.currentPoll) return;
     const url = `${window.location.origin}${window.location.pathname}?poll=${this.currentPoll.id}`;
-    copyToClipboardHelper(url, '투표함 링크가 복사되었습니다! 단톡방에 공유하세요.');
+    if (window.KakaoShareHelper) {
+      KakaoShareHelper.share('poll', this.currentPoll.title, this.currentPoll.description, url);
+    } else {
+      copyToClipboardHelper(url, '투표함 링크가 복사되었습니다! 단톡방에 공유하세요.');
+    }
   },
 
-  /**
-   * 모달 닫기
-   */
   closeModal() {
     const modal = document.getElementById('pollViewerModal');
     if (modal) modal.style.display = 'none';

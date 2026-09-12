@@ -6,6 +6,7 @@
  * 1. 선생님(방장)의 학급 과제 제출방 개설 및 링크 발급
  * 2. 학생의 원클릭 과제(텍스트/링크) 제출
  * 3. 제출 현황 실시간 확인 및 "참 잘했어요! 🌟" 칭찬 도장 피드백
+ * 4. 내 보관함 자동 아카이빙
  */
 
 const MiniClassroom = {
@@ -14,9 +15,6 @@ const MiniClassroom = {
 
   init() {},
 
-  /**
-   * 클래스룸 방 개설 (선생님)
-   */
   async createClassroom() {
     const title = (document.getElementById('classTitleInput')?.value || '').trim();
     const teacher = (document.getElementById('classTeacherInput')?.value || '').trim();
@@ -38,6 +36,11 @@ const MiniClassroom = {
         password: password ? SecurityManager.encrypt(password) : ''
       });
 
+      // 내 보관함에 아카이빙
+      if (window.BangjangVault) {
+        BangjangVault.add('class', classId, title, `${teacher} 선생님의 학급`);
+      }
+
       const shareUrl = `${window.location.origin}${window.location.pathname}?class=${classId}`;
       await copyToClipboardHelper(shareUrl, '클래스룸 링크가 복사되었습니다! 학생들에게 공유하세요.');
       
@@ -48,9 +51,6 @@ const MiniClassroom = {
     }
   },
 
-  /**
-   * 클래스룸 뷰어 로드
-   */
   async loadClassroom(classId) {
     const modal = document.getElementById('classViewerModal');
     const content = document.getElementById('classViewerContent');
@@ -81,9 +81,6 @@ const MiniClassroom = {
     }
   },
 
-  /**
-   * 클래스룸 뷰어 화면 렌더링
-   */
   renderViewer() {
     const content = document.getElementById('classViewerContent');
     if (!content || !this.currentClass) return;
@@ -93,7 +90,6 @@ const MiniClassroom = {
 
     let html = `
       <div class="glass-card" style="background: #1e293b; color: #f8fafc; border-radius: 20px; padding: 1.75rem;">
-        <!-- 상단 헤더 -->
         <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span class="badge-new" style="background: var(--accent-emerald);">🎓 ${c.teacher_name} 선생님의 학급</span>
@@ -103,7 +99,6 @@ const MiniClassroom = {
           ${c.description ? `<p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.3rem;">📢 과제 안내: ${c.description}</p>` : ''}
         </div>
 
-        <!-- 1. 학생 과제 제출 폼 -->
         <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
           <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 0.75rem;">✍️ 학생 과제 제출하기</h4>
           <div class="form-row" style="margin-bottom: 0.6rem;">
@@ -118,7 +113,6 @@ const MiniClassroom = {
           </button>
         </div>
 
-        <!-- 2. 실시간 과제 제출 목록 -->
         <div>
           <h4 style="font-size: 0.92rem; color: var(--text-muted); margin-bottom: 0.6rem;">📋 과제 제출 현황</h4>
           <div style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;">
@@ -135,7 +129,6 @@ const MiniClassroom = {
           </div>
         </div>
 
-        <!-- 하단 버튼 -->
         <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
           <button class="btn btn-secondary" style="flex: 1;" onclick="MiniClassroom.closeModal()">닫기</button>
           <button class="btn btn-gold" style="flex: 2;" onclick="MiniClassroom.shareLink()">🔗 클래스룸 링크 복사</button>
@@ -146,9 +139,6 @@ const MiniClassroom = {
     content.innerHTML = html;
   },
 
-  /**
-   * 학생 과제 제출
-   */
   async submitAssignment() {
     if (!this.currentClass) return;
     const name = (document.getElementById('studentNameInput')?.value || '').trim();
@@ -176,9 +166,6 @@ const MiniClassroom = {
     }
   },
 
-  /**
-   * 칭찬 도장 발급
-   */
   async praiseStudent(assignmentId) {
     try {
       await BangjangDB.praiseAssignment(assignmentId);
@@ -193,7 +180,11 @@ const MiniClassroom = {
   shareLink() {
     if (!this.currentClass) return;
     const url = `${window.location.origin}${window.location.pathname}?class=${this.currentClass.id}`;
-    copyToClipboardHelper(url, '클래스룸 링크가 복사되었습니다! 학생들에게 공유하세요.');
+    if (window.KakaoShareHelper) {
+      KakaoShareHelper.share('class', this.currentClass.title, `${this.currentClass.teacher_name} 선생님의 과제방`, url);
+    } else {
+      copyToClipboardHelper(url, '클래스룸 링크가 복사되었습니다! 학생들에게 공유하세요.');
+    }
   },
 
   closeModal() {
