@@ -4,15 +4,14 @@
  * ============================================================================
  * 역할:
  * 1. Supabase 연동 클라이언트 인스턴스 생성
- * 2. 민감한 데이터(계좌번호 등) 클라이언트 암호화/복호화 보안 처리
- * 3. 영수증(Bills) 및 투표/질문(Polls) DB 통신 API 함수 제공
+ * 2. 민감한 데이터(계좌번호, 비밀번호 등) 클라이언트 암호화/복호화 보안 처리
+ * 3. 영수증(Bills), 투표(Polls), 클래스룸(Classrooms) DB 통신 API 함수 제공
  */
 
-// 1. Supabase 연결 정보 설정 (사용자 제공 프로젝트)
+// 1. Supabase 연결 정보 설정
 const SUPABASE_URL = 'https://efbzpaaulnpbwghzytuq.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYnpwYWF1bG5wYndnaHp5dHVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyMDY1NjYsImV4cCI6MjEwNDc4MjU2Nn0.DqQgK-Jav3PlVfiiAK4pvYgKeR8jWLyde0rYuruZkTU';
 
-// Supabase 클라이언트 초기화 (CDN 로드 후 전역 supabase 객체 사용)
 let supabaseClient = null;
 
 function getSupabase() {
@@ -23,18 +22,11 @@ function getSupabase() {
 }
 
 /**
- * ============================================================================
  * [보안 암호화 모듈] SecurityManager
- * ============================================================================
- * 규칙 8 준수: 계좌번호 등 사용자의 민감 정보를 데이터베이스 저장 전 안전하게 암호화합니다.
  */
 const SecurityManager = {
-  // 프로젝트 고유 보안 솔트 키
   SECRET_SALT: 'BANGJANG_NET_SECURE_2026_KEY_#99',
 
-  /**
-   * 문자열 암호화 함수 (Base64 + XOR Cipher)
-   */
   encrypt(text) {
     if (!text) return '';
     try {
@@ -51,9 +43,6 @@ const SecurityManager = {
     }
   },
 
-  /**
-   * 암호화된 문자열 복호화 함수
-   */
   decrypt(encryptedText) {
     if (!encryptedText) return '';
     try {
@@ -66,28 +55,21 @@ const SecurityManager = {
       }
       return result;
     } catch (e) {
-      console.warn('복호화 실패 (평문 데이터일 수 있음):', e);
+      console.warn('복호화 실패:', e);
       return encryptedText;
     }
   }
 };
 
 /**
- * ============================================================================
  * [DB 통신 서비스] BangjangDB
- * ============================================================================
  */
 const BangjangDB = {
-  /**
-   * [영수증 저장]
-   * @param {Object} billData - { title, totalAmount, perPerson, members, rounds, account, payLink }
-   * @returns {Promise<string>} 생성된 영수증 UUID
-   */
+  // 1. 영수증 관련
   async saveBill(billData) {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase 클라이언트를 초기화할 수 없습니다.');
 
-    // 계좌 정보 암호화 적용
     const encryptedAccount = SecurityManager.encrypt(billData.account || '');
 
     const { data, error } = await sb
@@ -107,17 +89,10 @@ const BangjangDB = {
       .select('id')
       .single();
 
-    if (error) {
-      console.error('영수증 저장 오류:', error);
-      throw error;
-    }
+    if (error) throw error;
     return data.id;
   },
 
-  /**
-   * [영수증 조회]
-   * @param {string} billId - 영수증 UUID
-   */
   async fetchBill(billId) {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase 클라이언트 오류');
@@ -128,26 +103,16 @@ const BangjangDB = {
       .eq('id', billId)
       .single();
 
-    if (error) {
-      console.error('영수증 조회 오류:', error);
-      throw error;
-    }
+    if (error) throw error;
 
-    // 계좌 정보 복호화
     if (data && data.encrypted_account) {
       data.decrypted_account = SecurityManager.decrypt(data.encrypted_account);
     } else {
       data.decrypted_account = '';
     }
-
     return data;
   },
 
-  /**
-   * [입금 완료 상태 업데이트]
-   * @param {string} billId - 영수증 UUID
-   * @param {Array<string>} paidMembers - 입금 완료자 배열
-   */
   async updatePaidMembers(billId, paidMembers) {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase 클라이언트 오류');
@@ -157,18 +122,11 @@ const BangjangDB = {
       .update({ paid_members: paidMembers })
       .eq('id', billId);
 
-    if (error) {
-      console.error('입금 상태 업데이트 오류:', error);
-      throw error;
-    }
+    if (error) throw error;
     return true;
   },
 
-  /**
-   * [익명 투표/질문함 생성]
-   * @param {Object} pollData - { title, description, pollType, options }
-   * @returns {Promise<string>} 생성된 투표 UUID
-   */
+  // 2. 투표/질문함 관련
   async createPoll(pollData) {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase 클라이언트 오류');
@@ -186,21 +144,14 @@ const BangjangDB = {
       .select('id')
       .single();
 
-    if (error) {
-      console.error('투표함 생성 오류:', error);
-      throw error;
-    }
+    if (error) throw error;
     return data.id;
   },
 
-  /**
-   * [투표/질문함 및 응답 조회]
-   */
   async fetchPollWithResponses(pollId) {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase 클라이언트 오류');
 
-    // 1. 투표 기본 정보 조회
     const { data: poll, error: pollError } = await sb
       .from('polls')
       .select('*')
@@ -209,7 +160,6 @@ const BangjangDB = {
 
     if (pollError) throw pollError;
 
-    // 2. 투표 응답 목록 조회
     const { data: responses, error: respError } = await sb
       .from('poll_responses')
       .select('*')
@@ -217,13 +167,9 @@ const BangjangDB = {
       .order('created_at', { ascending: false });
 
     if (respError) throw respError;
-
     return { poll, responses: responses || [] };
   },
 
-  /**
-   * [투표 또는 익명 질문 제출]
-   */
   async submitPollResponse(pollId, choice, content) {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase 클라이언트 오류');
@@ -238,10 +184,83 @@ const BangjangDB = {
         }
       ]);
 
-    if (error) {
-      console.error('투표 제출 오류:', error);
-      throw error;
-    }
+    if (error) throw error;
+    return true;
+  },
+
+  // 3. 미니 클래스룸 관련
+  async createClassroom(classData) {
+    const sb = getSupabase();
+    if (!sb) throw new Error('Supabase 클라이언트 오류');
+
+    const { data, error } = await sb
+      .from('classrooms')
+      .insert([
+        {
+          title: classData.title,
+          teacher_name: classData.teacherName,
+          description: classData.description || '',
+          password_hash: classData.password || ''
+        }
+      ])
+      .select('id')
+      .single();
+
+    if (error) throw error;
+    return data.id;
+  },
+
+  async fetchClassroomWithAssignments(classId) {
+    const sb = getSupabase();
+    if (!sb) throw new Error('Supabase 클라이언트 오류');
+
+    const { data: classroom, error: classError } = await sb
+      .from('classrooms')
+      .select('*')
+      .eq('id', classId)
+      .single();
+
+    if (classError) throw classError;
+
+    const { data: assignments, error: assignError } = await sb
+      .from('assignments')
+      .select('*')
+      .eq('classroom_id', classId)
+      .order('created_at', { ascending: false });
+
+    if (assignError) throw assignError;
+    return { classroom, assignments: assignments || [] };
+  },
+
+  async submitAssignment(data) {
+    const sb = getSupabase();
+    if (!sb) throw new Error('Supabase 클라이언트 오류');
+
+    const { error } = await sb
+      .from('assignments')
+      .insert([
+        {
+          classroom_id: data.classroomId,
+          student_name: data.studentName,
+          student_id_num: data.studentIdNum || '',
+          content: data.content
+        }
+      ]);
+
+    if (error) throw error;
+    return true;
+  },
+
+  async praiseAssignment(assignmentId) {
+    const sb = getSupabase();
+    if (!sb) throw new Error('Supabase 클라이언트 오류');
+
+    const { error } = await sb
+      .from('assignments')
+      .update({ is_praised: true })
+      .eq('id', assignmentId);
+
+    if (error) throw error;
     return true;
   }
 };

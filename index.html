@@ -6,19 +6,21 @@
   <title>방장.net (Bangjang.net) - 세상의 모든 방장을 위한 올인원 모임 툴킷</title>
   
   <!-- SEO & 소셜 미디어 메타 태그 (카카오톡, 페이스북 등) -->
-  <meta name="description" content="오픈채팅, 소모임, 스터디, 동아리 방장들을 위한 올인원 관리 & 오락 툴킷! 카톡 공지 생성, 1/N 회비 정산, 룰렛 및 사다리타기를 원클릭으로 간편하게.">
-  <meta name="keywords" content="방장, 방장.net, 모임관리, 카톡공지생성기, 더치페이계산기, 1/N정산, 룰렛, 사다리타기, 조짜기, 오픈채팅">
+  <meta name="description" content="오픈채팅, 소모임, 스터디, 동아리 방장들을 위한 올인원 관리 & 오락 툴킷! 카톡 공지 생성, 1/N 회비 정산, 뽀모도로 스터디룸, 미니 클래스룸, 룰렛 무료 제공.">
+  <meta name="keywords" content="방장, 방장.net, 모임관리, 카톡공지생성기, 더치페이계산기, 1/N정산, 뽀모도로스터디룸, 화이트노이즈, 미니클래스룸, 룰렛, 사다리타기, 조짜기, 오픈채팅">
   <meta property="og:title" content="👑 방장.net - 세상의 모든 방장을 위한 올인원 모임 툴킷">
-  <meta property="og:description" content="모임 공지 작성부터 회비 정산, 파티 게임까지 클릭 한 번으로 해결하세요.">
+  <meta property="og:description" content="공지 작성, 1/N 정산, 뽀모도로 스터디룸, 학급 과제방, 파티 게임까지 클릭 한 번으로 해결하세요.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://방장.net">
   <meta property="og:image" content="assets/images/og-image.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="👑 방장.net - 올인원 모임 툴킷">
-  <meta name="twitter:description" content="카톡 공지 생성, 1/N 회비 정산, 룰렛, 사다리타기 무료 제공">
+  <meta name="twitter:description" content="카톡 공지 생성, 1/N 회비 정산, 뽀모도로 스터디룸, 미니 클래스룸, 룰렛 무료 제공">
   <meta name="twitter:image" content="assets/images/og-image.jpg">
 
-  <!-- 파비콘 (Favicon) -->
+  <!-- PWA 매니페스트 및 테마 컬러 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6366f1">
   <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
   <link rel="apple-touch-icon" href="assets/images/favicon.svg">
 
@@ -53,7 +55,9 @@
       <li><button class="nav-tab-btn active" data-tab="hub" onclick="switchTab('hub')">🏠 전체 도구 허브</button></li>
       <li><button class="nav-tab-btn" data-tab="notice" onclick="switchTab('notice')">📢 스마트 공지 생성기</button></li>
       <li><button class="nav-tab-btn" data-tab="splitter" onclick="switchTab('splitter')">💰 1/N 회비 정산기</button></li>
-      <li><button class="nav-tab-btn" data-tab="poll" onclick="switchTab('poll')">🗳️ 실시간 익명 투표함 <span class="badge-new">NEW</span></button></li>
+      <li><button class="nav-tab-btn" data-tab="study" onclick="switchTab('study')">⏳ 뽀모도로 스터디룸 <span class="badge-new">NEW</span></button></li>
+      <li><button class="nav-tab-btn" data-tab="classroom" onclick="switchTab('classroom')">🎓 미니 클래스룸 <span class="badge-new">NEW</span></button></li>
+      <li><button class="nav-tab-btn" data-tab="poll" onclick="switchTab('poll')">🗳️ 실시간 익명 투표함</button></li>
       <li><button class="nav-tab-btn" data-tab="roulette" onclick="switchTab('roulette')">🎯 벌칙 & 메뉴 룰렛</button></li>
       <li><button class="nav-tab-btn" data-tab="team" onclick="switchTab('team')">👥 조짜기 & 순서 뽑기</button></li>
       <li><button class="nav-tab-btn" data-tab="ladder" onclick="switchTab('ladder')">🪜 사다리 타기</button></li>
@@ -69,7 +73,7 @@
     <section id="panel-hub" class="tab-panel active">
       <div class="section-header">
         <h1 class="section-title">👑 방장님, 무엇을 도와드릴까요?</h1>
-        <p class="section-desc">오픈채팅, 동아리, 소모임, 스터디 운영에 필요한 도구를 클릭 한 번으로 사용하세요.</p>
+        <p class="section-desc">오픈채팅, 동아리, 소모임, 스터디, 수업 운영에 필요한 모든 도구를 원클릭으로 사용하세요.</p>
       </div>
 
       <div class="hub-card-grid">
@@ -99,6 +103,32 @@
           </div>
         </div>
 
+        <!-- 뽀모도로 스터디룸 카드 -->
+        <div class="hub-card" onclick="switchTab('study')">
+          <div>
+            <div class="hub-card-icon">⏳</div>
+            <h2 class="hub-card-title">뽀모도로 온라인 스터디룸</h2>
+            <p class="hub-card-desc">25분 집중/5분 휴식 동기화 타이머와 빗소리·파도소리 힐링 화이트 노이즈 사운드를 무료로 즐기세요.</p>
+          </div>
+          <div class="hub-card-footer">
+            <span>집중 시작 →</span>
+            <span class="badge-new" style="background: var(--accent-emerald);">인기</span>
+          </div>
+        </div>
+
+        <!-- 미니 클래스룸 카드 -->
+        <div class="hub-card" onclick="switchTab('classroom')">
+          <div>
+            <div class="hub-card-icon">🎓</div>
+            <h2 class="hub-card-title">선생님 전용 미니 클래스룸</h2>
+            <p class="hub-card-desc">학생들이 가입 없이 링크 하나로 과제를 제출하고 선생님이 칭찬 도장 피드백을 남기는 공간입니다.</p>
+          </div>
+          <div class="hub-card-footer">
+            <span>학급 방 개설 →</span>
+            <span class="badge-new">교육용</span>
+          </div>
+        </div>
+
         <!-- 익명 투표 및 질문함 카드 -->
         <div class="hub-card" onclick="switchTab('poll')">
           <div>
@@ -108,7 +138,6 @@
           </div>
           <div class="hub-card-footer">
             <span>투표 방 개설 →</span>
-            <span class="badge-new" style="background: var(--accent-emerald);">실시간</span>
           </div>
         </div>
 
@@ -147,30 +176,6 @@
             <span>사다리 시작 →</span>
           </div>
         </div>
-
-        <!-- 확장 예정: 뽀모도로 스터디룸 (Coming Soon) -->
-        <div class="hub-card locked">
-          <div>
-            <div class="hub-card-icon">⏳</div>
-            <h2 class="hub-card-title">동기화 온라인 스터디룸</h2>
-            <p class="hub-card-desc">방장이 시간표를 관리하고 참가자들과 뽀모도로 타이머와 화이트 노이즈를 공유하는 공간입니다.</p>
-          </div>
-          <div class="hub-card-footer" style="color: var(--text-sub);">
-            <span>곧 출시 예정 (Phase 3) 🔒</span>
-          </div>
-        </div>
-
-        <!-- 확장 예정: 미니 클래스룸 (Coming Soon) -->
-        <div class="hub-card locked">
-          <div>
-            <div class="hub-card-icon">🎓</div>
-            <h2 class="hub-card-title">선생님 전용 미니 클래스룸</h2>
-            <p class="hub-card-desc">학생들이 가입 없이 링크 하나로 과제를 제출하고 익명으로 질문하는 교육자용 방장 룸입니다.</p>
-          </div>
-          <div class="hub-card-footer" style="color: var(--text-sub);">
-            <span>곧 출시 예정 (Phase 3) 🔒</span>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -182,7 +187,6 @@
       </div>
 
       <div class="grid-2col">
-        <!-- 입력 폼 -->
         <div class="glass-card">
           <div class="card-header">
             <h2 class="card-title">📝 공지 내용 작성</h2>
@@ -231,7 +235,6 @@
           </div>
         </div>
 
-        <!-- 실시간 카톡 미리보기 & 복사 -->
         <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
           <div>
             <div class="card-header">
@@ -258,17 +261,13 @@
       </div>
 
       <div class="grid-2col">
-        <!-- 정산 입력 폼 -->
         <div class="glass-card">
           <div class="card-header">
             <h2 class="card-title">💵 지출 내역 입력</h2>
             <button class="btn btn-sm btn-secondary" onclick="BillSplitter.addRound()">+ 차수 추가</button>
           </div>
 
-          <!-- 차수별 리스트 -->
-          <div id="splitRoundList">
-            <!-- 자바스크립트로 동적 생성 -->
-          </div>
+          <div id="splitRoundList"></div>
 
           <div class="form-group" style="margin-top: 1.25rem;">
             <label class="form-label">전체 참석자 명단 (쉼표 또는 공백으로 구분)</label>
@@ -287,7 +286,6 @@
           </div>
         </div>
 
-        <!-- 정산 결과 및 공유 -->
         <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
           <div>
             <div class="card-header">
@@ -309,7 +307,135 @@
       </div>
     </section>
 
-    <!-- [TAB 4] 실시간 익명 투표 & 질문함 (신규 추가) -->
+    <!-- [TAB 4] 뽀모도로 스터디룸 (신규 추가) -->
+    <section id="panel-study" class="tab-panel">
+      <div class="section-header">
+        <h1 class="section-title">⏳ 뽀모도로 온라인 스터디룸</h1>
+        <p class="section-desc">25분 집중 / 5분 휴식 타이머와 힐링 화이트 노이즈로 나만의 몰입 공간을 만드세요.</p>
+      </div>
+
+      <div class="grid-2col">
+        <!-- 뽀모도로 타이머 & 사운드 플레이어 -->
+        <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+          <div id="studyModeBadge" class="badge-new" style="background: var(--primary); font-size: 0.88rem; padding: 0.35rem 1rem; margin-bottom: 1.5rem;">
+            🔥 뽀모도로 집중 시간
+          </div>
+
+          <!-- 대형 디지털 타이머 디스플레이 -->
+          <div id="studyTimerDisplay" style="font-size: 4.5rem; font-weight: 900; letter-spacing: -0.03em; color: #ffffff; font-family: 'Consolas', monospace; margin-bottom: 1.5rem; text-shadow: 0 0 25px rgba(99, 102, 241, 0.4);">
+            25:00
+          </div>
+
+          <!-- 타이머 컨트롤 버튼 -->
+          <div style="display: flex; gap: 0.75rem; width: 100%; max-width: 360px; margin-bottom: 1.5rem;">
+            <button id="btnToggleTimer" class="btn btn-gold" style="flex: 2; font-size: 1.05rem;" onclick="StudyRoom.toggleTimer()">
+              ▶️ 타이머 시작
+            </button>
+            <button class="btn btn-secondary" style="flex: 1;" onclick="StudyRoom.resetTimer()">
+              🔄 리셋
+            </button>
+          </div>
+
+          <!-- 프리셋 버튼 -->
+          <div style="display: flex; gap: 0.4rem; margin-bottom: 2rem;">
+            <button class="btn btn-sm btn-secondary" onclick="StudyRoom.setPreset(25, 5)">25분/5분 (표준)</button>
+            <button class="btn btn-sm btn-secondary" onclick="StudyRoom.setPreset(50, 10)">50분/10분 (몰입)</button>
+            <button class="btn btn-sm btn-secondary" onclick="StudyRoom.setPreset(15, 3)">15분 (빠른 집중)</button>
+          </div>
+
+          <!-- 힐링 사운드 바 -->
+          <div style="width: 100%; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.5rem;">
+            <div style="font-size: 0.9rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 0.75rem;">
+              🎧 힐링 화이트 노이즈 (무료 재생)
+            </div>
+            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+              <button id="btnSoundRain" class="btn btn-sm btn-secondary" onclick="StudyRoom.toggleSound('rain')">🌧️ 빗소리</button>
+              <button id="btnSoundWaves" class="btn btn-sm btn-secondary" onclick="StudyRoom.toggleSound('waves')">🌊 파도소리</button>
+              <button id="btnSoundWhite" class="btn btn-sm btn-secondary" onclick="StudyRoom.toggleSound('white')">🎧 백색소음</button>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.75rem;">
+              <span style="font-size: 0.8rem; color: var(--text-muted);">볼륨:</span>
+              <input type="range" min="0" max="1" step="0.05" value="0.3" style="width: 120px;" oninput="SoundEngine.setVolume(this.value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- 오늘의 집중 목표 (To-Do) -->
+        <div class="glass-card">
+          <div class="card-header">
+            <h2 class="card-title">🎯 오늘의 집중 목표 선언</h2>
+          </div>
+
+          <div class="form-row" style="margin-bottom: 0.6rem;">
+            <input type="text" id="studyGoalName" class="form-input" style="flex: 1;" placeholder="닉네임 (예: 열공러)">
+            <input type="text" id="studyGoalText" class="form-input" style="flex: 2;" placeholder="오늘 끝낼 목표 작성!">
+          </div>
+          <button class="btn btn-primary btn-block" onclick="StudyRoom.addGoal()">
+            ✍️ 목표 등록하기
+          </button>
+
+          <div style="margin-top: 1.5rem;">
+            <h4 style="font-size: 0.92rem; color: var(--text-muted); margin-bottom: 0.6rem;">📋 목표 달성 리스트</h4>
+            <div id="studyGoalList">
+              <p style="color: var(--text-sub); text-align: center; padding: 1.5rem 0; font-size: 0.9rem;">
+                목표를 등록하고 완료할 때마다 체크해보세요!
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- [TAB 5] 미니 클래스룸 (신규 추가) -->
+    <section id="panel-classroom" class="tab-panel">
+      <div class="section-header">
+        <h1 class="section-title">🎓 선생님 전용 미니 클래스룸</h1>
+        <p class="section-desc">학생들이 가입 없이 링크 하나로 과제를 제출하고, 선생님이 칭찬 도장을 찍어주는 학급방입니다.</p>
+      </div>
+
+      <div class="grid-2col">
+        <div class="glass-card">
+          <div class="card-header">
+            <h2 class="card-title">🏫 새로운 학급 과제방 개설</h2>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">수업/학급 이름</label>
+            <input type="text" id="classTitleInput" class="form-input" placeholder="예: [3학년 2반] 9월 2주차 파이썬 코딩 과제">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">선생님(교육자) 성함</label>
+            <input type="text" id="classTeacherInput" class="form-input" placeholder="예: 최선생님">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">과제 안내 및 주의사항</label>
+            <textarea id="classDescInput" class="form-textarea" placeholder="과제 주제: 나만의 계산기 프로그램 완성하기&#10;제출 기한: 이번 주 금요일 24시까지" style="height: 100px;"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">방장 관리용 비밀번호 (선택사항)</label>
+            <input type="password" id="classPasswordInput" class="form-input" placeholder="방장 확인용 비밀번호 입력">
+          </div>
+
+          <button class="btn btn-primary btn-block" onclick="MiniClassroom.createClassroom()">
+            🚀 학급 과제방 개설 & 학생 공유 링크 복사
+          </button>
+        </div>
+
+        <div class="glass-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2.5rem 1.5rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🎓🌟</div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.6rem;">복잡한 LMS 없이 링크 하나로 끝나는 과제 수합</h3>
+          <p style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.7; max-width: 420px;">
+            선생님이 방을 만들고 단톡방이나 e학습터에 링크를 공유하면, 학생들이 이름만 적고 바로 과제를 제출할 수 있습니다.<br>
+            선생님은 제출된 과제를 확인하고 <strong>"🌟 칭찬 도장"</strong>을 찍어 학생들을 격려할 수 있습니다!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- [TAB 6] 실시간 익명 투표 & 질문함 -->
     <section id="panel-poll" class="tab-panel">
       <div class="section-header">
         <h1 class="section-title">🗳️ 실시간 익명 투표 & 질문함 (AMA)</h1>
@@ -317,7 +443,6 @@
       </div>
 
       <div class="grid-2col">
-        <!-- 방 개설 폼 -->
         <div class="glass-card">
           <div class="card-header">
             <h2 class="card-title">⚙️ 새로운 투표/질문 방 개설</h2>
@@ -346,9 +471,7 @@
               <label class="form-label" style="margin-bottom: 0;">투표 선택지</label>
               <button class="btn btn-sm btn-secondary" onclick="PollManager.addOptionInput()">+ 선택지 추가</button>
             </div>
-            <div id="pollOptionsContainer">
-              <!-- JS 동적 생성 -->
-            </div>
+            <div id="pollOptionsContainer"></div>
           </div>
 
           <button class="btn btn-primary btn-block" style="margin-top: 1rem;" onclick="PollManager.createPoll()">
@@ -356,7 +479,6 @@
           </button>
         </div>
 
-        <!-- 안내 카드 -->
         <div class="glass-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2.5rem 1.5rem;">
           <div style="font-size: 3rem; margin-bottom: 1rem;">🗳️✨</div>
           <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.6rem;">링크 하나로 끝나는 초간단 모임 소통</h3>
@@ -368,7 +490,7 @@
       </div>
     </section>
 
-    <!-- [TAB 5] 벌칙 & 메뉴 룰렛 -->
+    <!-- [TAB 7] 벌칙 & 메뉴 룰렛 -->
     <section id="panel-roulette" class="tab-panel">
       <div class="section-header">
         <h1 class="section-title">🎯 벌칙 & 메뉴 추천 룰렛</h1>
@@ -376,7 +498,6 @@
       </div>
 
       <div class="grid-2col">
-        <!-- 룰렛 그래픽 영역 -->
         <div class="glass-card" style="display: flex; flex-direction: column; align-items: center;">
           <div class="canvas-wrapper">
             <div class="roulette-arrow"></div>
@@ -392,7 +513,6 @@
           </button>
         </div>
 
-        <!-- 룰렛 항목 관리 -->
         <div class="glass-card">
           <div class="card-header">
             <h2 class="card-title">⚙️ 룰렛 항목 설정</h2>
@@ -415,7 +535,7 @@
       </div>
     </section>
 
-    <!-- [TAB 6] 조짜기 & 순서 뽑기 -->
+    <!-- [TAB 8] 조짜기 & 순서 뽑기 -->
     <section id="panel-team" class="tab-panel">
       <div class="section-header">
         <h1 class="section-title">👥 랜덤 조짜기 & 발표 순서 뽑기</h1>
@@ -423,7 +543,6 @@
       </div>
 
       <div class="grid-2col">
-        <!-- 설정 영역 -->
         <div class="glass-card">
           <div class="card-header">
             <h2 class="card-title">📋 참가자 명단 입력</h2>
@@ -454,7 +573,6 @@
           </button>
         </div>
 
-        <!-- 결과 표시 영역 -->
         <div class="glass-card">
           <div class="card-header">
             <h2 class="card-title">🏆 조 편성 결과</h2>
@@ -470,7 +588,7 @@
       </div>
     </section>
 
-    <!-- [TAB 7] 사다리 타기 -->
+    <!-- [TAB 9] 사다리 타기 -->
     <section id="panel-ladder" class="tab-panel">
       <div class="section-header">
         <h1 class="section-title">🪜 인터랙티브 사다리 타기</h1>
@@ -478,7 +596,6 @@
       </div>
 
       <div class="grid-2col">
-        <!-- 사다리 설정 -->
         <div class="glass-card">
           <div class="card-header">
             <h2 class="card-title">⚙️ 사다리 설정</h2>
@@ -499,7 +616,6 @@
           </button>
         </div>
 
-        <!-- 사다리 캔버스 -->
         <div class="glass-card" style="display: flex; flex-direction: column; align-items: center;">
           <canvas id="ladderCanvas" width="560" height="420"></canvas>
           <div id="ladderResultText" style="margin-top: 1rem; font-weight: 700; color: var(--accent-gold); font-size: 1.05rem;">
@@ -512,19 +628,35 @@
   </main>
 
   <!-- ==========================================================================
-       4. 모달 뷰어 (영수증 모달 & 투표 모달)
+       4. 모달 뷰어 (영수증 모달, 투표 모달, 클래스룸 모달, 약관 모달)
        ========================================================================== -->
   <!-- 웹 영수증 뷰어 모달 -->
   <div id="billViewerModal" class="modal-overlay" style="display: none;">
-    <div class="modal-container" id="billViewerContent">
-      <!-- bill-viewer.js에 의해 동적 렌더링 -->
-    </div>
+    <div class="modal-container" id="billViewerContent"></div>
   </div>
 
   <!-- 익명 투표/질문함 뷰어 모달 -->
   <div id="pollViewerModal" class="modal-overlay" style="display: none;">
-    <div class="modal-container" id="pollViewerContent">
-      <!-- poll.js에 의해 동적 렌더링 -->
+    <div class="modal-container" id="pollViewerContent"></div>
+  </div>
+
+  <!-- 미니 클래스룸 뷰어 모달 -->
+  <div id="classViewerModal" class="modal-overlay" style="display: none;">
+    <div class="modal-container" id="classViewerContent"></div>
+  </div>
+
+  <!-- 이용약관 & 개인정보처리방침 모달 (애드센스 승인 필수 요소) -->
+  <div id="policyModal" class="modal-overlay" style="display: none;">
+    <div class="modal-container">
+      <div class="glass-card" style="background: #1e293b; color: #f8fafc; border-radius: 20px; padding: 1.75rem;">
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; margin-bottom: 1rem;">🔒 개인정보처리방침 및 서비스 이용약관</h3>
+        <div style="font-size: 0.88rem; color: var(--text-muted); max-height: 300px; overflow-y: auto; line-height: 1.7;">
+          <p><strong>1. 수집하는 개인정보 항목:</strong> 본 사이트(방장.net)는 회원가입 없이 익명으로 동작하며, 주민등록번호 등 민감정보를 수집하지 않습니다. 사용자가 입력한 계좌번호 및 과제 정보는 암호화되어 안전하게 보관됩니다.</p>
+          <p style="margin-top: 0.5rem;"><strong>2. 데이터의 보호 및 관리:</strong> 모든 데이터는 전송 구간 암호화(HTTPS) 및 데이터베이스 보안(RLS) 정책에 따라 철저히 보호됩니다.</p>
+          <p style="margin-top: 0.5rem;"><strong>3. 광고 및 쿠키:</strong> 사이트 품질 개선 및 Google AdSense 광고 송출을 위해 브라우저 쿠키가 사용될 수 있습니다.</p>
+        </div>
+        <button class="btn btn-primary btn-block" style="margin-top: 1.25rem;" onclick="document.getElementById('policyModal').style.display='none'">확인 및 닫기</button>
+      </div>
     </div>
   </div>
 
@@ -534,11 +666,16 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- ==========================================================================
-       6. 푸터 (Footer)
+       6. 푸터 (Footer) & 구글 애드센스 정책 링크
        ========================================================================== -->
   <footer class="footer">
     <div class="footer-brand">👑 방장.net (Bangjang.net)</div>
-    <p>오픈채팅 · 소모임 · 동아리 · 스터디 모임 주최자를 위한 최고의 무료 웹 툴킷</p>
+    <p>오픈채팅 · 소모임 · 동아리 · 스터디 · 수업 모임 주최자를 위한 최고의 무료 웹 툴킷</p>
+    <div style="margin-top: 0.75rem; display: flex; justify-content: center; gap: 1rem; font-size: 0.82rem;">
+      <a href="#" style="color: var(--text-muted); text-decoration: underline;" onclick="document.getElementById('policyModal').style.display='flex'; return false;">개인정보처리방침</a>
+      <a href="#" style="color: var(--text-muted); text-decoration: underline;" onclick="document.getElementById('policyModal').style.display='flex'; return false;">이용약관</a>
+      <a href="https://github.com/jychoi107403/bangjang" target="_blank" style="color: var(--text-muted); text-decoration: underline;">GitHub 저장소</a>
+    </div>
     <p style="margin-top: 0.5rem; font-size: 0.78rem;">강력한 암호화 보안 기술로 계좌번호 및 개인정보를 안전하게 보호합니다.</p>
   </footer>
 
@@ -546,11 +683,25 @@
        7. 모듈형 스크립트 연결 (순서 중요)
        ========================================================================== -->
   <script src="js/supabase-config.js"></script>
+  <script src="js/sound-generator.js"></script>
   <script src="js/app.js"></script>
   <script src="js/bill-viewer.js"></script>
   <script src="js/poll.js"></script>
+  <script src="js/study-room.js"></script>
+  <script src="js/classroom.js"></script>
   <script src="js/notice-generator.js"></script>
   <script src="js/splitter.js"></script>
   <script src="js/games.js"></script>
+
+  <!-- PWA 서비스 워커 등록 스크립트 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch(err => {
+          console.log('PWA ServiceWorker 등록 생략(로컬/미지원 환경):', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

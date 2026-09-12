@@ -7,23 +7,26 @@
  * 2. 전역 토스트 알림 메시지 표시
  * 3. 클립보드 복사 유틸리티
  * 4. 브라우저 로컬스토리지 데이터 보존
- * 5. URL 쿼리 파라미터(?bill=..., ?poll=...) 자동 감지 및 뷰어 실행
+ * 5. URL 쿼리 파라미터(?bill=..., ?poll=..., ?class=...) 자동 감지 및 뷰어 실행
  */
 
 // 페이지 로드 시 초기화 실행
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. URL 파라미터 확인 (?bill=... 또는 ?poll=...)
+  // 1. URL 파라미터 확인 (?bill=... 또는 ?poll=... 또는 ?class=...)
   const urlParams = new URLSearchParams(window.location.search);
   const billId = urlParams.get('bill');
   const pollId = urlParams.get('poll');
+  const classId = urlParams.get('class');
 
   if (billId && window.BillViewer) {
     BillViewer.loadBill(billId);
   } else if (pollId && window.PollManager) {
     PollManager.loadPoll(pollId);
+  } else if (classId && window.MiniClassroom) {
+    MiniClassroom.loadClassroom(classId);
   }
 
-  // 2. URL 해시(#notice, #splitter, #poll 등)에 따른 탭 자동 전환
+  // 2. URL 해시(#notice, #splitter, #study, #classroom 등)에 따른 탭 자동 전환
   const initialHash = window.location.hash.replace('#', '');
   if (initialHash && document.getElementById(`panel-${initialHash}`)) {
     switchTab(initialHash);
@@ -37,12 +40,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.RouletteGame) RouletteGame.init();
   if (window.LadderGame) LadderGame.init();
   if (window.PollManager) PollManager.init();
+  if (window.StudyRoom) StudyRoom.init();
+  if (window.MiniClassroom) MiniClassroom.init();
 });
 
 /**
  * [탭 전환 함수]
  * 새로운 메뉴/탭이 HTML에 추가되어도 ID 규칙(panel-[tabId])만 맞추면 자동으로 동작합니다.
- * @param {string} tabId - 전환할 탭의 고유 ID (예: 'hub', 'notice', 'splitter', 'poll' 등)
+ * @param {string} tabId - 전환할 탭의 고유 ID (예: 'hub', 'notice', 'splitter', 'study', 'classroom', 'poll' 등)
  */
 function switchTab(tabId) {
   // 1. 모든 탭 패널을 숨김 처리
@@ -116,7 +121,6 @@ async function copyToClipboardHelper(text, successMessage = '클립보드에 복
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(text);
     } else {
-      // 최신 API 미지원 환경(일부 구형 브라우저)용 폴백 처리
       const textArea = document.createElement('textarea');
       textArea.value = text;
       textArea.style.position = 'fixed';
@@ -136,7 +140,6 @@ async function copyToClipboardHelper(text, successMessage = '클립보드에 복
 
 /**
  * [로컬스토리지 안전 관리자]
- * 사용자가 입력한 계좌번호나 설정값을 브라우저에 안전하게 저장/로드합니다.
  */
 const StorageManager = {
   get(key, defaultValue = null) {
