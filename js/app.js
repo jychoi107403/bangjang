@@ -3,7 +3,7 @@
  * 방장.net (Bangjang.net) 메인 앱 컨트롤러 (app.js)
  * ============================================================================
  * 역할:
- * 1. 탭 네비게이션 전환 (확장 가능한 구조)
+ * 1. 탭 네비게이션 전환 (메인 화면 접속 시 깔끔한 URL 유지)
  * 2. 전역 토스트 알림 메시지 표시
  * 3. 클립보드 복사 유틸리티
  * 4. 브라우저 로컬스토리지 데이터 보존
@@ -26,11 +26,12 @@ document.addEventListener('DOMContentLoaded', () => {
     MiniClassroom.loadClassroom(classId);
   }
 
-  // 2. URL 해시(#notice, #splitter, #study, #classroom 등)에 따른 탭 자동 전환
+  // 2. URL 해시 확인 (#notice, #splitter 등)
   const initialHash = window.location.hash.replace('#', '');
-  if (initialHash && document.getElementById(`panel-${initialHash}`)) {
+  if (initialHash && initialHash !== 'hub' && document.getElementById(`panel-${initialHash}`)) {
     switchTab(initialHash);
   } else {
+    // 기본 메인 화면은 #hub 없이 깔끔하게 표시
     switchTab('hub');
   }
 
@@ -46,8 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /**
  * [탭 전환 함수]
- * 새로운 메뉴/탭이 HTML에 추가되어도 ID 규칙(panel-[tabId])만 맞추면 자동으로 동작합니다.
- * @param {string} tabId - 전환할 탭의 고유 ID (예: 'hub', 'notice', 'splitter', 'study', 'classroom', 'poll' 등)
+ * 메인 허브('hub')일 때는 URL 뒤에 #hub를 붙이지 않고 깔끔한 도메인 주소를 유지합니다.
+ * @param {string} tabId - 전환할 탭의 고유 ID (예: 'hub', 'notice', 'splitter', 'study' 등)
  */
 function switchTab(tabId) {
   // 1. 모든 탭 패널을 숨김 처리
@@ -64,8 +65,17 @@ function switchTab(tabId) {
 
   if (targetPanel) {
     targetPanel.classList.add('active');
-    window.location.hash = tabId;
+
+    // 메인 홈(hub)일 때는 깔끔하게 도메인만 유지하고, 다른 메뉴일 때만 해시(#) 기록
+    if (tabId === 'hub') {
+      if (window.location.hash) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    } else {
+      window.location.hash = tabId;
+    }
   }
+
   if (targetBtn) {
     targetBtn.classList.add('active');
   }
@@ -83,7 +93,6 @@ function switchTab(tabId) {
 
 /**
  * [토스트 알림 표시 함수]
- * 사용자에게 복사 완료, 저장 완료 등의 피드백을 우측 하단에 세련되게 띄워줍니다.
  * @param {string} message - 표시할 메시지 텍스트
  * @param {string} icon - 이모지 또는 아이콘 (기본값: '✨')
  */
@@ -107,9 +116,6 @@ function showToast(message, icon = '✨') {
 
 /**
  * [클립보드 복사 헬퍼]
- * 모바일(iOS/안드로이드) 및 데스크탑 브라우저에서 안전하게 텍스트를 클립보드에 복사합니다.
- * @param {string} text - 복사할 문자열
- * @param {string} successMessage - 성공 시 띄울 토스트 메시지
  */
 async function copyToClipboardHelper(text, successMessage = '클립보드에 복사되었습니다!') {
   if (!text || text.trim() === '') {

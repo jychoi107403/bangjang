@@ -2,7 +2,7 @@
   "name": "방장.net - 올인원 모임 툴킷",
   "short_name": "방장.net",
   "description": "세상의 모든 방장을 위한 올인원 모임 관리 & 파티 툴킷",
-  "start_url": "/#hub",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#6366f1",
