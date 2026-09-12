@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (initialHash && initialHash !== 'hub' && document.getElementById(`panel-${initialHash}`)) {
     switchTab(initialHash);
   } else {
-    // 기본 메인 화면은 #hub 없이 깔끔하게 표시
     switchTab('hub');
   }
 
@@ -48,25 +47,21 @@ document.addEventListener('DOMContentLoaded', () => {
 /**
  * [탭 전환 함수]
  * 메인 허브('hub')일 때는 URL 뒤에 #hub를 붙이지 않고 깔끔한 도메인 주소를 유지합니다.
- * @param {string} tabId - 전환할 탭의 고유 ID (예: 'hub', 'notice', 'splitter', 'study' 등)
+ * @param {string} tabId - 전환할 탭의 고유 ID
  */
 function switchTab(tabId) {
-  // 1. 모든 탭 패널을 숨김 처리
   const panels = document.querySelectorAll('.tab-panel');
   panels.forEach(panel => panel.classList.remove('active'));
 
-  // 2. 모든 상단 탭 버튼의 활성(active) 상태 해제
   const buttons = document.querySelectorAll('.nav-tab-btn');
   buttons.forEach(btn => btn.classList.remove('active'));
 
-  // 3. 선택된 패널 및 버튼 활성화
   const targetPanel = document.getElementById(`panel-${tabId}`);
   const targetBtn = document.querySelector(`.nav-tab-btn[data-tab="${tabId}"]`);
 
   if (targetPanel) {
     targetPanel.classList.add('active');
 
-    // 메인 홈(hub)일 때는 깔끔하게 도메인만 유지하고, 다른 메뉴일 때만 해시(#) 기록
     if (tabId === 'hub') {
       if (window.location.hash) {
         history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -80,21 +75,20 @@ function switchTab(tabId) {
     targetBtn.classList.add('active');
   }
 
-  // 4. 모바일 화면 등에서 상단으로 스크롤 부드럽게 이동
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // 5. 캔버스 기반 게임 탭으로 이동 시 화면 리사이징 보정
+  // 캔버스 기반 게임 탭으로 이동 시 화면 렌더링 강제 실행
   if (tabId === 'roulette' && window.RouletteGame) {
     setTimeout(() => RouletteGame.draw(), 50);
   } else if (tabId === 'ladder' && window.LadderGame) {
-    setTimeout(() => LadderGame.draw(), 50);
+    setTimeout(() => {
+      LadderGame.generateLadder();
+    }, 50);
   }
 }
 
 /**
  * [토스트 알림 표시 함수]
- * @param {string} message - 표시할 메시지 텍스트
- * @param {string} icon - 이모지 또는 아이콘 (기본값: '✨')
  */
 function showToast(message, icon = '✨') {
   const container = document.getElementById('toastContainer');
@@ -106,7 +100,6 @@ function showToast(message, icon = '✨') {
 
   container.appendChild(toast);
 
-  // 3초 후 토스트 자동 제거
   setTimeout(() => {
     if (toast && toast.parentNode) {
       toast.parentNode.removeChild(toast);

@@ -5,7 +5,7 @@
  * 모듈 목록:
  * 1. RouletteGame: 회전 룰렛 (커피 쏘기, 벌칙, 점심 메뉴 등)
  * 2. TeamShuffler: 팀/조 나누기 및 발표 순서 뽑기
- * 3. LadderGame: 실시간 인터랙티브 사다리 타기 애니메이션 & 추적 게임
+ * 3. LadderGame: 인터랙티브 사다리 타기 (호환성 100% 표준 Canvas 엔진)
  */
 
 /* ==========================================================================
@@ -73,7 +73,6 @@ const RouletteGame = {
 
     ctx.clearRect(0, 0, width, height);
 
-    // 1. 각 섹터 그리기
     for (let i = 0; i < count; i++) {
       const angle = this.startAngle + i * arc;
       ctx.fillStyle = this.colors[i % this.colors.length];
@@ -88,7 +87,6 @@ const RouletteGame = {
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // 2. 글자 쓰기
       ctx.save();
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 24px Pretendard, sans-serif';
@@ -107,7 +105,6 @@ const RouletteGame = {
       ctx.restore();
     }
 
-    // 3. 중앙 핀 원
     ctx.beginPath();
     ctx.arc(center, center, 32, 0, 2 * Math.PI);
     ctx.fillStyle = '#1e1b4b';
@@ -116,7 +113,6 @@ const RouletteGame = {
     ctx.lineWidth = 5;
     ctx.stroke();
 
-    // 4. 중앙 왕관 아이콘
     ctx.fillStyle = '#f59e0b';
     ctx.font = '22px sans-serif';
     ctx.fillText('👑', center - 12, center + 8);
@@ -142,7 +138,6 @@ const RouletteGame = {
     const animate = (currentTime) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
       const easeOut = 1 - Math.pow(1 - progress, 3);
       
       this.startAngle = initialStartAngle + totalRotation * easeOut;
@@ -297,56 +292,69 @@ const TeamShuffler = {
 
 
 /* ==========================================================================
-   3. [완벽 고도화] 인터랙티브 사다리 타기 게임 (LadderGame)
+   3. [완벽 호환] 인터랙티브 사다리 타기 게임 엔진 (LadderGame)
    ========================================================================== */
 const LadderGame = {
   canvas: null,
   ctx: null,
-  players: [],
-  results: [],
+  players: ['철수', '영희', '민수', '지수'],
+  results: ['당첨🎉', '꽝😢', '커피쏘기☕', '꽝😢'],
   rungs: [],
   levels: 8,
   animating: false,
-  highlightPaths: [], // 각 플레이어의 사다리 이동 경로
 
   init() {
     this.canvas = document.getElementById('ladderCanvas');
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
 
-    // 캔버스 클릭 및 모바일 터치 이벤트 리스너 등록
-    this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
-    this.canvas.addEventListener('touchstart', (e) => {
-      if (e.touches && e.touches[0]) {
-        this.handleCanvasClick(e.touches[0]);
-      }
-    });
+    // 캔버스 크기 명시적 지정
+    this.canvas.width = 560;
+    this.canvas.height = 420;
 
+    // 클릭 이벤트 등록
+    this.canvas.onclick = (e) => this.handleCanvasClick(e);
+
+    // 기본 생성 실행
     this.generateLadder();
   },
 
+  /**
+   * [사다리 생성하기 버튼 클릭 시 호출]
+   */
   generateLadder() {
-    if (!this.canvas || !this.ctx) return;
+    this.canvas = document.getElementById('ladderCanvas');
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext('2d');
 
     const playerInput = document.getElementById('ladderPlayers')?.value || '';
     const resultInput = document.getElementById('ladderResults')?.value || '';
 
-    this.players = playerInput.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
-    this.results = resultInput.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
+    // 입력값 파싱 (쉼표, 줄바꿈)
+    let parsedPlayers = playerInput.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
+    let parsedResults = resultInput.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
 
-    if (this.players.length < 2) {
-      showToast('참가자는 최소 2명 이상이어야 합니다.', '⚠️');
-      return;
+    if (parsedPlayers.length >= 2) {
+      this.players = parsedPlayers;
+    } else {
+      this.players = ['철수', '영희', '민수', '지수'];
     }
 
+    if (parsedResults.length > 0) {
+      this.results = parsedResults;
+    } else {
+      this.results = ['당첨🎉', '꽝😢', '커피쏘기☕', '벌칙'];
+    }
+
+    // 결과 개수와 플레이어 수 맞추기
     while (this.results.length < this.players.length) {
       this.results.push(`결과 ${this.results.length + 1}`);
     }
 
+    // 가로선(발판) 무작위 생성
     this.rungs = [];
     const count = this.players.length;
 
-    // 가로선(발판) 무작위 생성
     for (let l = 1; l <= this.levels; l++) {
       for (let c = 0; c < count - 1; c++) {
         if (Math.random() > 0.45) {
@@ -358,42 +366,43 @@ const LadderGame = {
       }
     }
 
-    this.highlightPaths = [];
+    // 캔버스 그리기
     this.draw();
 
-    // 상단 플레이어 버튼 바 렌더링
+    // 상단 버튼 바 갱신
     this.renderPlayerButtons();
 
     const resultText = document.getElementById('ladderResultText');
     if (resultText) {
-      resultText.innerHTML = `👉 아래 플레이어 버튼이나 캔버스의 이름을 클릭하여 사다리를 타보세요!`;
+      resultText.innerHTML = `👉 상단의 <strong>[출발!]</strong> 버튼이나 캔버스 이름을 클릭하여 결과를 확인하세요!`;
     }
-    showToast('새로운 사다리가 생성되었습니다! 플레이어를 클릭하세요.', '🪜');
+
+    showToast('새로운 사다리가 생성되었습니다!', '🪜');
   },
 
   /**
-   * 플레이어 클릭 버튼 바 렌더링
+   * 상단 플레이어 버튼 바 렌더링
    */
   renderPlayerButtons() {
     const container = document.getElementById('ladderPlayerButtons');
     if (!container) return;
 
     container.innerHTML = `
-      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1rem;">
+      <div style="display: flex; gap: 0.45rem; flex-wrap: wrap; justify-content: center; margin-bottom: 0.85rem;">
         ${this.players.map((p, idx) => `
-          <button class="btn btn-sm btn-gold" onclick="LadderGame.startLadderForPlayer(${idx})">
+          <button type="button" class="btn btn-sm btn-gold" onclick="LadderGame.startLadderForPlayer(${idx})">
             🏃 ${p} 출발!
           </button>
         `).join('')}
-        <button class="btn btn-sm btn-primary" onclick="LadderGame.startAll()">
-          ⚡ 전체 결과 한번에 보기
+        <button type="button" class="btn btn-sm btn-primary" onclick="LadderGame.startAll()">
+          ⚡ 전체 결과 보기
         </button>
       </div>
     `;
   },
 
   /**
-   * 캔버스 좌표 클릭 이벤트 핸들러
+   * 캔버스 클릭 핸들러
    */
   handleCanvasClick(e) {
     if (this.animating || !this.canvas) return;
@@ -405,8 +414,8 @@ const LadderGame = {
     const paddingX = 60;
     const colWidth = (this.canvas.width - paddingX * 2) / (count - 1);
 
-    // 상단 플레이어 이름 영역 클릭 감지 (Y: 0 ~ 80)
-    if (clickY <= 80) {
+    // 상단 플레이어 영역 클릭 감지
+    if (clickY <= 85) {
       for (let i = 0; i < count; i++) {
         const x = paddingX + i * colWidth;
         if (Math.abs(clickX - x) <= colWidth / 2) {
@@ -418,7 +427,7 @@ const LadderGame = {
   },
 
   /**
-   * 특정 플레이어의 사다리 경로 계산
+   * 사다리 경로 계산 함수
    */
   calculatePath(playerIndex) {
     const w = this.canvas.width;
@@ -433,15 +442,12 @@ const LadderGame = {
     let currentCol = playerIndex;
     const points = [];
 
-    // 시작점
     points.push({ x: paddingX + currentCol * colWidth, y: paddingTop });
 
     for (let l = 1; l <= this.levels; l++) {
       const y = paddingTop + l * rowHeight;
-      // 현재 레벨의 Y좌표로 수직 하강
       points.push({ x: paddingX + currentCol * colWidth, y });
 
-      // 좌우 가로선 확인
       const rightRung = this.rungs.find(r => r.level === l && r.col === currentCol);
       const leftRung = this.rungs.find(r => r.level === l && r.col === currentCol - 1);
 
@@ -454,14 +460,13 @@ const LadderGame = {
       }
     }
 
-    // 바닥 도착점
     points.push({ x: paddingX + currentCol * colWidth, y: h - paddingBottom });
 
     return { points, finalCol: currentCol, player: this.players[playerIndex], result: this.results[currentCol] };
   },
 
   /**
-   * 단일 플레이어 사다리 타기 실행
+   * 개별 플레이어 사다리 애니메이션 시작
    */
   startLadderForPlayer(playerIndex) {
     if (this.animating) return;
@@ -470,31 +475,30 @@ const LadderGame = {
 
     showToast(`${pathData.player}님 사다리 출발! 🏃`, '🪜');
 
-    // 애니메이션 실행
     this.animateSinglePath(pathData.points, '#f43f5e', () => {
       this.animating = false;
       const resultText = document.getElementById('ladderResultText');
       if (resultText) {
-        resultText.innerHTML = `🎉 <strong>[${pathData.player}]</strong>님의 결과 👉 <span style="font-size: 1.25rem; color: var(--accent-gold);">${pathData.result}</span>`;
+        resultText.innerHTML = `🎉 <strong>[${pathData.player}]</strong>님의 결과 👉 <span style="font-size: 1.25rem; color: var(--accent-gold); font-weight: 800;">${pathData.result}</span>`;
       }
       showToast(`[${pathData.player}] 👉 ${pathData.result}`, '🎉');
     });
   },
 
   /**
-   * 전체 플레이어 사다리 한번에 보기
+   * 전체 사다리 결과 한번에 표시
    */
   startAll() {
     if (this.animating) return;
     this.draw();
 
     const colors = ['#f43f5e', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#06b6d4', '#8b5cf6', '#14b8a6'];
-    let summaryHtml = '<div style="margin-top: 0.5rem; text-align: left; background: rgba(15,23,42,0.8); padding: 0.8rem; border-radius: 10px;">';
+    let summaryHtml = '<div style="margin-top: 0.6rem; text-align: left; background: rgba(15,23,42,0.85); padding: 0.85rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">';
 
     this.players.forEach((p, idx) => {
       const pathData = this.calculatePath(idx);
       this.drawPathStatic(pathData.points, colors[idx % colors.length]);
-      summaryHtml += `<div style="padding: 0.2rem 0; font-size: 0.92rem;">• <strong>${p}</strong>: <span style="color: var(--accent-gold); font-weight: bold;">${pathData.result}</span></div>`;
+      summaryHtml += `<div style="padding: 0.25rem 0; font-size: 0.95rem;">• <strong>${p}</strong>: <span style="color: var(--accent-gold); font-weight: bold;">${pathData.result}</span></div>`;
     });
 
     summaryHtml += '</div>';
@@ -506,12 +510,12 @@ const LadderGame = {
   },
 
   /**
-   * 경로를 따라 선을 긋는 부드러운 애니메이션
+   * 부드러운 단일 선 긋기 애니메이션
    */
   animateSinglePath(points, strokeColor, callback) {
     let currentSegment = 0;
     let progress = 0;
-    const speed = 0.08; // 애니메이션 속도
+    const speed = 0.09;
 
     const step = () => {
       if (currentSegment >= points.length - 1) {
@@ -528,10 +532,8 @@ const LadderGame = {
         currentSegment++;
       }
 
-      // 캔버스 재렌더링
       this.draw();
 
-      // 지금까지 지나온 선 전체 그리기
       this.ctx.strokeStyle = strokeColor;
       this.ctx.lineWidth = 6;
       this.ctx.lineCap = 'round';
@@ -543,19 +545,18 @@ const LadderGame = {
         this.ctx.lineTo(points[i].x, points[i].y);
       }
 
-      // 현재 진행 중인 세그먼트 선
       if (currentSegment < points.length - 1) {
         const currentX = p1.x + (p2.x - p1.x) * progress;
         const currentY = p1.y + (p2.y - p1.y) * progress;
         this.ctx.lineTo(currentX, currentY);
 
-        // 달리는 캐릭터 원
         this.ctx.stroke();
         this.ctx.beginPath();
         this.ctx.arc(currentX, currentY, 8, 0, 2 * Math.PI);
         this.ctx.fillStyle = '#ffffff';
         this.ctx.fill();
         this.ctx.strokeStyle = strokeColor;
+        this.ctx.lineWidth = 2;
         this.ctx.stroke();
       } else {
         this.ctx.stroke();
@@ -581,7 +582,7 @@ const LadderGame = {
   },
 
   /**
-   * 사다리 기본 그래픽 렌더링
+   * 표준 캔버스 렌더링 (호환성 100% 안전 코드)
    */
   draw() {
     if (!this.canvas || !this.ctx) return;
@@ -599,10 +600,11 @@ const LadderGame = {
     const colWidth = (w - paddingX * 2) / (count - 1);
     const rowHeight = (h - paddingTop - paddingBottom) / (this.levels + 1);
 
-    // 1. 세로 사다리 기둥
+    // 1. 세로 사다리 기둥 및 텍스트 박스
     for (let i = 0; i < count; i++) {
       const x = paddingX + i * colWidth;
 
+      // 세로선
       ctx.strokeStyle = '#475569';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -610,29 +612,25 @@ const LadderGame = {
       ctx.lineTo(x, h - paddingBottom);
       ctx.stroke();
 
-      // 상단 참가자 이름 (클릭 유도 배지 스타일)
+      // 상단 참가자 이름 박스 (표준 fillRect 사용으로 에러 완전 차단)
       ctx.fillStyle = '#6366f1';
-      ctx.beginPath();
-      ctx.roundRect ? ctx.roundRect(x - 45, paddingTop - 42, 90, 30, 8) : ctx.rect(x - 45, paddingTop - 42, 90, 30);
-      ctx.fill();
+      ctx.fillRect(x - 45, paddingTop - 42, 90, 30);
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px Pretendard, sans-serif';
+      ctx.font = 'bold 14px sans-serif';
       ctx.textAlign = 'center';
       const pName = this.players[i].length > 5 ? this.players[i].slice(0, 4) + '..' : this.players[i];
       ctx.fillText(pName, x, paddingTop - 22);
 
-      // 하단 결과 항목
+      // 하단 결과 항목 박스
       ctx.fillStyle = '#1e1b4b';
-      ctx.beginPath();
-      ctx.roundRect ? ctx.roundRect(x - 45, h - paddingBottom + 12, 90, 30, 8) : ctx.rect(x - 45, h - paddingBottom + 12, 90, 30);
-      ctx.fill();
+      ctx.fillRect(x - 45, h - paddingBottom + 12, 90, 30);
       ctx.strokeStyle = '#f59e0b';
       ctx.lineWidth = 1.5;
-      ctx.stroke();
+      ctx.strokeRect(x - 45, h - paddingBottom + 12, 90, 30);
 
       ctx.fillStyle = '#f59e0b';
-      ctx.font = 'bold 13px Pretendard, sans-serif';
+      ctx.font = 'bold 13px sans-serif';
       const rName = (this.results[i] || '').length > 6 ? this.results[i].slice(0, 5) + '..' : (this.results[i] || '');
       ctx.fillText(rName, x, h - paddingBottom + 32);
     }
