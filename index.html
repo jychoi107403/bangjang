@@ -203,14 +203,32 @@
       </div>
     </section>
 
-    <!-- [TAB 2] 스마트 공지 & 규칙 생성기 -->
+    <!-- [TAB 2] 스마트 공지 & 규칙 생성기 (글로벌 다국어 & 멀티 채널 지원) -->
     <section id="panel-notice" class="tab-panel">
       <div class="section-header">
-        <h1 class="section-title">📢 스마트 공지 & 규칙 생성기</h1>
-        <p class="section-desc">템플릿을 고르고 몇 가지만 입력하면, 단톡방에 바로 붙여넣을 수 있는 예쁜 공지문이 완성됩니다.</p>
+        <h1 class="section-title">📢 글로벌 스마트 공지 & 규칙 생성기</h1>
+        <p class="section-desc">카카오톡, 인스타그램, 디스코드, 왓츠앱까지! 접속 국가 자동 감지와 4개 국어 템플릿으로 3초 만에 공지를 완성하세요.</p>
+      </div>
+
+      <!-- 🌍 1. 다국어 선택 바 (접속 국가 자동 감지) -->
+      <div class="glass-card" style="margin-bottom: 1.25rem; padding: 0.9rem 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.2rem;">🌍</span>
+            <span style="font-size: 0.92rem; font-weight: 700; color: #ffffff;">공지 언어 선택</span>
+            <span class="badge-new" style="background: var(--accent-emerald); font-size: 0.72rem;">접속 국가 자동 감지됨</span>
+          </div>
+          <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-sm lang-select-btn btn-primary" data-lang="ko" onclick="NoticeGenerator.setLanguage('ko')">🇰🇷 한국어</button>
+            <button type="button" class="btn btn-sm lang-select-btn btn-secondary" data-lang="en" onclick="NoticeGenerator.setLanguage('en')">🇺🇸 English</button>
+            <button type="button" class="btn btn-sm lang-select-btn btn-secondary" data-lang="ja" onclick="NoticeGenerator.setLanguage('ja')">🇯🇵 日本語</button>
+            <button type="button" class="btn btn-sm lang-select-btn btn-secondary" data-lang="zh" onclick="NoticeGenerator.setLanguage('zh')">🇨🇳 中文</button>
+          </div>
+        </div>
       </div>
 
       <div class="grid-2col">
+        <!-- 좌측: 공지 내용 입력 폼 -->
         <div class="glass-card">
           <div class="card-header">
             <h2 class="card-title">📝 공지 내용 작성</h2>
@@ -220,15 +238,15 @@
           <div class="form-group">
             <label class="form-label">템플릿 유형 선택</label>
             <select id="noticeTemplateType" class="form-select" onchange="NoticeGenerator.onTemplateChange()">
-              <option value="gathering">🎉 정기 모임 / 번개 모임 공지</option>
-              <option value="study">📚 스터디 모임 / 과제 수칙</option>
-              <option value="rules">📜 오픈채팅방 / 소모임 입장 규칙</option>
-              <option value="online">💻 온라인 / 디스코드 회의 안내</option>
+              <option value="gathering">🎉 정기 모임 / 번개 모임 (Meetup)</option>
+              <option value="study">📚 스터디 / 프로젝트 과제 (Study)</option>
+              <option value="rules">📜 채팅방 / 커뮤니티 규칙 (Rules)</option>
+              <option value="online">💻 온라인 / 화상 회의 (Online Sync)</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label class="form-label">모임/방 이름</label>
+            <label class="form-label">모임/이벤트 이름</label>
             <input type="text" id="noticeTitle" class="form-input" placeholder="예: [주말 러닝 크루] 9월 2차 정기 런" oninput="NoticeGenerator.renderPreview()">
           </div>
 
@@ -250,28 +268,55 @@
 
           <div class="form-group">
             <label class="form-label">준비물 & 주요 안내사항 (한 줄에 하나씩)</label>
-            <textarea id="noticeItems" class="form-textarea" placeholder="편한 운동화 및 복장&#10;개인 음료수&#10;지각 시 사전 연락 필수!" oninput="NoticeGenerator.renderPreview()"></textarea>
+            <textarea id="noticeItems" class="form-textarea" placeholder="편한 운동화 및 복장&#10;개인 음료수&#10;지각 시 사전 연락 필수!" oninput="NoticeGenerator.renderPreview()" style="height: 90px;"></textarea>
           </div>
 
           <div class="form-group">
             <label class="form-label">방장의 한마디 / 맺음말</label>
             <input type="text" id="noticeFooter" class="form-input" placeholder="예: 첫 참석자분들도 부담 없이 오세요! 신나게 달려봅시다 🔥" oninput="NoticeGenerator.renderPreview()">
           </div>
+
+          <div class="form-group">
+            <label class="form-label">소셜 홍보용 해시태그 (인스타그램/스레드용)</label>
+            <input type="text" id="noticeHashtags" class="form-input" placeholder="#정기모임 #주말모임 #친목모임 #방장넷" oninput="NoticeGenerator.renderPreview()">
+          </div>
         </div>
 
+        <!-- 우측: 채널별 미리보기 및 다채널 전송 -->
         <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
           <div>
-            <div class="card-header">
-              <h2 class="card-title">💬 카카오톡 미리보기</h2>
+            <div class="card-header" style="margin-bottom: 0.75rem;">
+              <h2 class="card-title">💬 채널별 포맷 미리보기</h2>
               <button class="btn btn-sm btn-secondary" onclick="NoticeGenerator.resetFields()">초기화</button>
             </div>
-            <div id="noticePreviewBox" class="preview-box">공지 내용을 입력하면 이곳에 실시간으로 표시됩니다.</div>
+
+            <!-- 채널 선택 탭 -->
+            <div style="display: flex; gap: 0.4rem; margin-bottom: 0.85rem; flex-wrap: wrap;">
+              <button type="button" class="btn btn-sm channel-select-btn active" data-channel="kakao" onclick="NoticeGenerator.setChannel('kakao')">🟡 카톡/LINE</button>
+              <button type="button" class="btn btn-sm channel-select-btn" data-channel="instagram" onclick="NoticeGenerator.setChannel('instagram')">📸 인스타그램</button>
+              <button type="button" class="btn btn-sm channel-select-btn" data-channel="discord" onclick="NoticeGenerator.setChannel('discord')">👾 디스코드</button>
+              <button type="button" class="btn btn-sm channel-select-btn" data-channel="whatsapp" onclick="NoticeGenerator.setChannel('whatsapp')">🟢 WhatsApp</button>
+            </div>
+
+            <div id="noticePreviewBox" class="preview-box" style="min-height: 240px; font-family: monospace; font-size: 0.88rem; line-height: 1.6;">공지 내용을 입력하면 이곳에 실시간으로 표시됩니다.</div>
           </div>
 
-          <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
-            <button class="btn btn-gold btn-block" onclick="NoticeGenerator.copyToClipboard()">
-              📋 카카오톡 공지문 전체 복사하기
+          <!-- 하단 다채널 원클릭 전송 & 복사 버튼 그룹 -->
+          <div style="margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <button class="btn btn-gold btn-block" style="font-size: 1rem; padding: 0.85rem;" onclick="NoticeGenerator.copyToClipboard()">
+              📋 현재 채널 포맷으로 전체 복사
             </button>
+            <div style="display: flex; gap: 0.4rem;">
+              <button class="btn btn-sm btn-secondary" style="flex: 1; background: #fee500; color: #191919; font-weight: 700;" onclick="NoticeGenerator.shareKakao()">
+                🟡 카카오톡
+              </button>
+              <button class="btn btn-sm btn-secondary" style="flex: 1; background: #25D366; color: #ffffff; font-weight: 700;" onclick="NoticeGenerator.shareWhatsApp()">
+                🟢 WhatsApp
+              </button>
+              <button class="btn btn-sm btn-secondary" style="flex: 1; background: #229ED9; color: #ffffff; font-weight: 700;" onclick="NoticeGenerator.shareTelegram()">
+                ✈️ Telegram
+              </button>
+            </div>
           </div>
         </div>
       </div>
