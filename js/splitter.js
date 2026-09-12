@@ -4,9 +4,9 @@
  * ============================================================================
  * 역할:
  * 1. 1차, 2차, 3차 등 다단계 지출 내역 동적 추가/관리
- * 2. 참석자별 맞춤 금액(지각자, 1차만 참여자 등) 자동 분할 계산
+ * 2. 참석자별 맞춤 금액 자동 분할 계산
  * 3. 계좌번호 및 간편 송금 링크 포함 카카오톡 송금 안내문 생성
- * 4. 자주 쓰는 계좌번호 로컬스토리지 저장/불러오기
+ * 4. [Supabase 연동] 고유 웹 영수증 공유 링크 생성 및 실시간 입금 체크 연계
  */
 
 const BillSplitter = {
@@ -14,6 +14,7 @@ const BillSplitter = {
   rounds: [
     { id: 1, name: '1차 식사 (삼겹살)', amount: 120000, attendees: '' }
   ],
+  lastResultText: '',
 
   /**
    * 모듈 초기화
@@ -148,8 +149,9 @@ const BillSplitter = {
     resultText += `─────────────────────\n`;
     resultText += `💵 총 지출 금액: ${totalAmount.toLocaleString()}원\n\n`;
 
+    let perPerson = 0;
     if (memberCount > 0 && totalAmount > 0) {
-      const perPerson = Math.ceil(totalAmount / memberCount / 10) * 10; // 10원 단위 절상
+      perPerson = Math.ceil(totalAmount / memberCount / 10) * 10; // 10원 단위 절상
       resultText += `🎯 1인당 입금액: ${perPerson.toLocaleString()}원\n\n`;
       resultText += `📌 [개인별 정산 현황]\n`;
       members.forEach(member => {
@@ -181,6 +183,56 @@ const BillSplitter = {
     }
 
     this.lastResultText = resultText;
+    this.currentCalculation = {
+      totalAmount,
+      perPerson,
+      members,
+      rounds: this.rounds,
+      account,
+      payLink
+    };
+  },
+
+  /**
+   * [Supabase 연동] 웹 영수증 공유 링크 생성 및 열기
+   */
+  async createShareableLink() {
+    this.calculate();
+    const data = this.currentCalculation;
+
+    if (!data.members || data.members.length === 0) {
+      showToast('참석자 명단을 먼저 입력해주세요.', '⚠️');
+      return;
+    }
+    if (data.totalAmount <= 0) {
+      showToast('지출 금액을 1원 이상 입력해주세요.', '⚠️');
+      return;
+    }
+
+    showToast('클라우드에 안전하게 영수증을 생성하는 중...', '⏳');
+
+    try {
+      const billId = await BangjangDB.saveBill({
+        title: '모임 회비 1/N 정산',
+        totalAmount: data.totalAmount,
+        perPerson: data.perPerson,
+        members: data.members,
+        rounds: data.rounds,
+        account: data.account,
+        payLink: data.payLink
+      });
+
+      const shareUrl = `${window.location.origin}${window.location.pathname}?bill=${billId}`;
+      await copyToClipboardHelper(shareUrl, '웹 영수증 링크가 생성 & 복사되었습니다! 카톡에 공유해보세요.');
+
+      // 바로 웹 영수증 뷰어 모달 띄우기
+      if (window.BillViewer) {
+        BillViewer.loadBill(billId);
+      }
+    } catch (err) {
+      console.error('영수증 링크 생성 실패:', err);
+      showToast('영수증 링크 생성에 실패했습니다. DB 설정을 확인해주세요.', '❌');
+    }
   },
 
   /**

@@ -25,6 +25,9 @@
   <!-- 폰트 & 스타일시트 -->
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- Supabase JS 공식 SDK (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -43,13 +46,14 @@
   </header>
 
   <!-- ==========================================================================
-       2. 확장형 탭 네비게이션 (새로운 기능 추가 시 버튼만 추가하면 확장 가능)
+       2. 확장형 탭 네비게이션
        ========================================================================== -->
   <nav class="nav-tab-container" aria-label="주요 기능 네비게이션">
     <ul class="nav-tabs" id="navTabs">
       <li><button class="nav-tab-btn active" data-tab="hub" onclick="switchTab('hub')">🏠 전체 도구 허브</button></li>
       <li><button class="nav-tab-btn" data-tab="notice" onclick="switchTab('notice')">📢 스마트 공지 생성기</button></li>
       <li><button class="nav-tab-btn" data-tab="splitter" onclick="switchTab('splitter')">💰 1/N 회비 정산기</button></li>
+      <li><button class="nav-tab-btn" data-tab="poll" onclick="switchTab('poll')">🗳️ 실시간 익명 투표함 <span class="badge-new">NEW</span></button></li>
       <li><button class="nav-tab-btn" data-tab="roulette" onclick="switchTab('roulette')">🎯 벌칙 & 메뉴 룰렛</button></li>
       <li><button class="nav-tab-btn" data-tab="team" onclick="switchTab('team')">👥 조짜기 & 순서 뽑기</button></li>
       <li><button class="nav-tab-btn" data-tab="ladder" onclick="switchTab('ladder')">🪜 사다리 타기</button></li>
@@ -87,11 +91,24 @@
           <div>
             <div class="hub-card-icon">💰</div>
             <h2 class="hub-card-title">스마트 1/N 회비 정산기</h2>
-            <p class="hub-card-desc">1차/2차 차등 참석자, 술 안 마신 멤버까지 똑똑하게 분할 계산하고 송금 안내 텍스트를 복사합니다.</p>
+            <p class="hub-card-desc">차등 정산부터 카카오톡 영수증 생성 및 실시간 입금 체크 웹 링크까지 한 번에 지원합니다.</p>
           </div>
           <div class="hub-card-footer">
-            <span>정산하기 →</span>
-            <span class="badge-new">필수</span>
+            <span>정산 & 웹 링크 생성 →</span>
+            <span class="badge-new">클라우드</span>
+          </div>
+        </div>
+
+        <!-- 익명 투표 및 질문함 카드 -->
+        <div class="hub-card" onclick="switchTab('poll')">
+          <div>
+            <div class="hub-card-icon">🗳️</div>
+            <h2 class="hub-card-title">실시간 익명 투표 & 질문함</h2>
+            <p class="hub-card-desc">회식 날짜 투표, 장소 선정, 방장에게 바라는 점을 단톡방 링크 하나로 익명 취합합니다.</p>
+          </div>
+          <div class="hub-card-footer">
+            <span>투표 방 개설 →</span>
+            <span class="badge-new" style="background: var(--accent-emerald);">실시간</span>
           </div>
         </div>
 
@@ -139,7 +156,7 @@
             <p class="hub-card-desc">방장이 시간표를 관리하고 참가자들과 뽀모도로 타이머와 화이트 노이즈를 공유하는 공간입니다.</p>
           </div>
           <div class="hub-card-footer" style="color: var(--text-sub);">
-            <span>곧 출시 예정 (Phase 2) 🔒</span>
+            <span>곧 출시 예정 (Phase 3) 🔒</span>
           </div>
         </div>
 
@@ -151,7 +168,7 @@
             <p class="hub-card-desc">학생들이 가입 없이 링크 하나로 과제를 제출하고 익명으로 질문하는 교육자용 방장 룸입니다.</p>
           </div>
           <div class="hub-card-footer" style="color: var(--text-sub);">
-            <span>곧 출시 예정 (Phase 2) 🔒</span>
+            <span>곧 출시 예정 (Phase 3) 🔒</span>
           </div>
         </div>
       </div>
@@ -237,7 +254,7 @@
     <section id="panel-splitter" class="tab-panel">
       <div class="section-header">
         <h1 class="section-title">💰 스마트 1/N 회비 정산기</h1>
-        <p class="section-desc">차수별 금액과 참석 멤버를 입력하면 자동으로 공평하게 계산하고 정산 안내문을 만들어 드립니다.</p>
+        <p class="section-desc">차수별 금액을 입력하고 카카오톡 텍스트 복사 또는 실시간 웹 영수증 공유 링크를 생성하세요.</p>
       </div>
 
       <div class="grid-2col">
@@ -245,7 +262,7 @@
         <div class="glass-card">
           <div class="card-header">
             <h2 class="card-title">💵 지출 내역 입력</h2>
-            <button class="btn btn-sm btn-secondary" onclick="BillSplitter.addRound()">+ 차수(라운드) 추가</button>
+            <button class="btn btn-sm btn-secondary" onclick="BillSplitter.addRound()">+ 차수 추가</button>
           </div>
 
           <!-- 차수별 리스트 -->
@@ -270,26 +287,88 @@
           </div>
         </div>
 
-        <!-- 정산 결과 및 카톡 공유 양식 -->
+        <!-- 정산 결과 및 공유 -->
         <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
           <div>
             <div class="card-header">
-              <h2 class="card-title">🧾 정산 결과 및 송금 안내문</h2>
+              <h2 class="card-title">🧾 정산 결과 및 영수증</h2>
               <button class="btn btn-sm btn-secondary" onclick="BillSplitter.saveAccountToLocal()">계좌번호 저장</button>
             </div>
             <div id="splitResultBox" class="preview-box">참석자 및 지출 금액을 입력하시면 여기에 영수증이 계산됩니다.</div>
           </div>
 
-          <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
-            <button class="btn btn-gold btn-block" onclick="BillSplitter.copyToClipboard()">
-              📋 정산 안내문 복사하기
+          <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem;">
+            <button class="btn btn-gold btn-block" onclick="BillSplitter.createShareableLink()">
+              🔗 [강력 추천] 웹 영수증 공유 링크 생성하기 (실시간 입금 확인)
+            </button>
+            <button class="btn btn-secondary btn-block" onclick="BillSplitter.copyToClipboard()">
+              📋 텍스트로 복사하기
             </button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- [TAB 4] 벌칙 & 메뉴 룰렛 -->
+    <!-- [TAB 4] 실시간 익명 투표 & 질문함 (신규 추가) -->
+    <section id="panel-poll" class="tab-panel">
+      <div class="section-header">
+        <h1 class="section-title">🗳️ 실시간 익명 투표 & 질문함 (AMA)</h1>
+        <p class="section-desc">회식 날짜, 장소 투표나 모임원들의 솔직한 익명 건의사항을 1분 만에 링크로 취합하세요.</p>
+      </div>
+
+      <div class="grid-2col">
+        <!-- 방 개설 폼 -->
+        <div class="glass-card">
+          <div class="card-header">
+            <h2 class="card-title">⚙️ 새로운 투표/질문 방 개설</h2>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">유형 선택</label>
+            <select id="pollTypeSelect" class="form-select" onchange="PollManager.onTypeChange()">
+              <option value="vote">🗳️ 객관식 투표 (날짜, 장소, 메뉴 선정)</option>
+              <option value="qna">💬 익명 건의 & 질문함 (방장에게 한마디)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">제목</label>
+            <input type="text" id="pollTitleInput" class="form-input" placeholder="예: [투표] 이번 주 정기 모임 날짜 투표">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">상세 설명 (선택사항)</label>
+            <input type="text" id="pollDescInput" class="form-input" placeholder="예: 참석 가능한 시간을 모두 고려하여 선택해주세요!">
+          </div>
+
+          <div id="pollOptionsGroup" class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+              <label class="form-label" style="margin-bottom: 0;">투표 선택지</label>
+              <button class="btn btn-sm btn-secondary" onclick="PollManager.addOptionInput()">+ 선택지 추가</button>
+            </div>
+            <div id="pollOptionsContainer">
+              <!-- JS 동적 생성 -->
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-block" style="margin-top: 1rem;" onclick="PollManager.createPoll()">
+            🚀 투표/질문 방 개설 & 링크 복사
+          </button>
+        </div>
+
+        <!-- 안내 카드 -->
+        <div class="glass-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2.5rem 1.5rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🗳️✨</div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.6rem;">링크 하나로 끝나는 초간단 모임 소통</h3>
+          <p style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.7; max-width: 420px;">
+            방장이 방을 개설하면 고유 웹 링크가 발급됩니다.<br>
+            모임원들은 별도 회원가입 없이 스마트폰에서 1초 만에 익명으로 투표하거나 건의사항을 남길 수 있습니다!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- [TAB 5] 벌칙 & 메뉴 룰렛 -->
     <section id="panel-roulette" class="tab-panel">
       <div class="section-header">
         <h1 class="section-title">🎯 벌칙 & 메뉴 추천 룰렛</h1>
@@ -336,7 +415,7 @@
       </div>
     </section>
 
-    <!-- [TAB 5] 조짜기 & 순서 뽑기 -->
+    <!-- [TAB 6] 조짜기 & 순서 뽑기 -->
     <section id="panel-team" class="tab-panel">
       <div class="section-header">
         <h1 class="section-title">👥 랜덤 조짜기 & 발표 순서 뽑기</h1>
@@ -391,7 +470,7 @@
       </div>
     </section>
 
-    <!-- [TAB 6] 사다리 타기 -->
+    <!-- [TAB 7] 사다리 타기 -->
     <section id="panel-ladder" class="tab-panel">
       <div class="section-header">
         <h1 class="section-title">🪜 인터랙티브 사다리 타기</h1>
@@ -424,7 +503,7 @@
         <div class="glass-card" style="display: flex; flex-direction: column; align-items: center;">
           <canvas id="ladderCanvas" width="560" height="420"></canvas>
           <div id="ladderResultText" style="margin-top: 1rem; font-weight: 700; color: var(--accent-gold); font-size: 1.05rem;">
-            [사다리 생성하기]를 누른 뒤 참가자 이름을 클릭하여 결과를 확인하세요!
+            [사다리 생성하기]를 누른 뒤 결과를 확인하세요!
           </div>
         </div>
       </div>
@@ -433,23 +512,43 @@
   </main>
 
   <!-- ==========================================================================
-       4. 글로벌 토스트 알림 컨테이너
+       4. 모달 뷰어 (영수증 모달 & 투표 모달)
+       ========================================================================== -->
+  <!-- 웹 영수증 뷰어 모달 -->
+  <div id="billViewerModal" class="modal-overlay" style="display: none;">
+    <div class="modal-container" id="billViewerContent">
+      <!-- bill-viewer.js에 의해 동적 렌더링 -->
+    </div>
+  </div>
+
+  <!-- 익명 투표/질문함 뷰어 모달 -->
+  <div id="pollViewerModal" class="modal-overlay" style="display: none;">
+    <div class="modal-container" id="pollViewerContent">
+      <!-- poll.js에 의해 동적 렌더링 -->
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       5. 글로벌 토스트 알림 컨테이너
        ========================================================================== -->
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- ==========================================================================
-       5. 푸터 (Footer)
+       6. 푸터 (Footer)
        ========================================================================== -->
   <footer class="footer">
     <div class="footer-brand">👑 방장.net (Bangjang.net)</div>
     <p>오픈채팅 · 소모임 · 동아리 · 스터디 모임 주최자를 위한 최고의 무료 웹 툴킷</p>
-    <p style="margin-top: 0.5rem; font-size: 0.78rem;">모든 데이터는 브라우저 내에 안전하게 보관되며 서버로 전송되지 않습니다.</p>
+    <p style="margin-top: 0.5rem; font-size: 0.78rem;">강력한 암호화 보안 기술로 계좌번호 및 개인정보를 안전하게 보호합니다.</p>
   </footer>
 
   <!-- ==========================================================================
-       6. 확장 가능한 모듈형 스크립트 연결
+       7. 모듈형 스크립트 연결 (순서 중요)
        ========================================================================== -->
+  <script src="js/supabase-config.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/bill-viewer.js"></script>
+  <script src="js/poll.js"></script>
   <script src="js/notice-generator.js"></script>
   <script src="js/splitter.js"></script>
   <script src="js/games.js"></script>
