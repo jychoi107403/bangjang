@@ -3,13 +3,13 @@
  * 방장 전용 모임 파티 오락 툴킷 (games.js)
  * ============================================================================
  * 모듈 목록:
- * 1. RouletteGame: 회전 룰렛 (커피 쏘기, 벌칙, 점심 메뉴 등)
+ * 1. RouletteGame: 회전 룰렛 (부드러운 실시간 회전 애니메이션 완벽 보장)
  * 2. TeamShuffler: 팀/조 나누기 및 발표 순서 뽑기
- * 3. LadderGame: 인터랙티브 사다리 타기 (호환성 100% 표준 Canvas 엔진)
+ * 3. LadderGame: 인터랙티브 사다리 타기
  */
 
 /* ==========================================================================
-   1. 벌칙 & 메뉴 추천 룰렛 게임 (RouletteGame)
+   1. [애니메이션 완벽 보장] 벌칙 & 메뉴 추천 룰렛 게임 (RouletteGame)
    ========================================================================== */
 const RouletteGame = {
   items: ['김철수', '이영희', '박민수', '최지수', '정현우', '강서연'],
@@ -26,16 +26,21 @@ const RouletteGame = {
   },
 
   init() {
-    this.canvas = document.getElementById('rouletteCanvas');
-    if (!this.canvas) return;
-    this.ctx = this.canvas.getContext('2d');
-
+    this.ensureCanvas();
     const input = document.getElementById('rouletteItemsInput');
-    if (input) {
+    if (input && !input.value) {
       input.value = this.items.join('\n');
     }
-
     this.draw();
+  },
+
+  ensureCanvas() {
+    this.canvas = document.getElementById('rouletteCanvas');
+    if (this.canvas) {
+      this.canvas.width = 720;
+      this.canvas.height = 720;
+      this.ctx = this.canvas.getContext('2d');
+    }
   },
 
   loadPreset(type) {
@@ -60,12 +65,13 @@ const RouletteGame = {
   },
 
   draw() {
+    this.ensureCanvas();
     if (!this.canvas || !this.ctx) return;
     const ctx = this.ctx;
     const width = this.canvas.width;
     const height = this.canvas.height;
     const center = width / 2;
-    const radius = center - 20;
+    const radius = center - 30;
     const count = this.items.length;
     if (count === 0) return;
 
@@ -73,6 +79,7 @@ const RouletteGame = {
 
     ctx.clearRect(0, 0, width, height);
 
+    // 1. 부채꼴 섹터 그리기
     for (let i = 0; i < count; i++) {
       const angle = this.startAngle + i * arc;
       ctx.fillStyle = this.colors[i % this.colors.length];
@@ -83,19 +90,21 @@ const RouletteGame = {
       ctx.lineTo(center, center);
       ctx.fill();
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-      ctx.lineWidth = 3;
+      // 테두리 구분선
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 4;
       ctx.stroke();
 
+      // 2. 텍스트 렌더링
       ctx.save();
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 24px Pretendard, sans-serif';
-      ctx.shadowColor = 'rgba(0,0,0,0.6)';
-      ctx.shadowBlur = 4;
+      ctx.font = 'bold 26px sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 6;
       
       ctx.translate(
-        center + Math.cos(angle + arc / 2) * (radius * 0.65),
-        center + Math.sin(angle + arc / 2) * (radius * 0.65)
+        center + Math.cos(angle + arc / 2) * (radius * 0.62),
+        center + Math.sin(angle + arc / 2) * (radius * 0.62)
       );
       ctx.rotate(angle + arc / 2 + Math.PI / 2);
       
@@ -105,39 +114,62 @@ const RouletteGame = {
       ctx.restore();
     }
 
+    // 3. 중앙 핀 원
     ctx.beginPath();
-    ctx.arc(center, center, 32, 0, 2 * Math.PI);
-    ctx.fillStyle = '#1e1b4b';
+    ctx.arc(center, center, 42, 0, 2 * Math.PI);
+    ctx.fillStyle = '#0f172a';
     ctx.fill();
     ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 6;
     ctx.stroke();
 
+    // 4. 중앙 왕관 이모지
     ctx.fillStyle = '#f59e0b';
-    ctx.font = '22px sans-serif';
-    ctx.fillText('👑', center - 12, center + 8);
+    ctx.font = '28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('👑', center, center);
   },
 
+  /**
+   * [실시간 물리 감속 회전 애니메이션]
+   */
   spin() {
     if (this.isSpinning) return;
+    this.ensureCanvas();
+
     if (this.items.length < 2) {
       showToast('룰렛 항목을 최소 2개 이상 입력해주세요.', '⚠️');
       return;
     }
 
     this.isSpinning = true;
+    const btn = document.getElementById('btnSpinRoulette');
+    if (btn) {
+      btn.textContent = '🎲 힘차게 돌아가는 중...! ✨';
+      btn.disabled = true;
+    }
+
     const banner = document.getElementById('rouletteResultBanner');
     if (banner) banner.style.display = 'none';
 
-    const spinRounds = 5 + Math.random() * 3;
+    // 최소 7바퀴 ~ 최대 10바퀴 회전 + 랜덤 각도
+    const spinRounds = 7 + Math.random() * 4;
     const totalRotation = spinRounds * 2 * Math.PI + Math.random() * (2 * Math.PI);
-    const duration = 4000;
-    const startTime = performance.now();
+    const duration = 3800; // 3.8초 동안 회전
     const initialStartAngle = this.startAngle;
 
+    let startTime = null;
+
     const animate = (currentTime) => {
+      if (!startTime) {
+        startTime = currentTime; // 첫 프레임의 타임스탬프로 정확한 기준점 설정
+      }
+
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
+      
+      // 자연스러운 감속 곡선 (Cubic Ease-Out)
       const easeOut = 1 - Math.pow(1 - progress, 3);
       
       this.startAngle = initialStartAngle + totalRotation * easeOut;
@@ -147,6 +179,10 @@ const RouletteGame = {
         requestAnimationFrame(animate);
       } else {
         this.isSpinning = false;
+        if (btn) {
+          btn.textContent = '🎲 룰렛 다시 돌리기!';
+          btn.disabled = false;
+        }
         this.determineWinner();
       }
     };
@@ -157,6 +193,7 @@ const RouletteGame = {
   determineWinner() {
     const count = this.items.length;
     const arc = (2 * Math.PI) / count;
+    // 화살표는 상단(3 * Math.PI / 2 또는 270도)에 위치
     const normalizedAngle = (1.5 * Math.PI - (this.startAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
     const winningIndex = Math.floor(normalizedAngle / arc) % count;
     const winner = this.items[winningIndex];
@@ -168,7 +205,7 @@ const RouletteGame = {
       banner.style.display = 'block';
     }
 
-    showToast(`축하합니다! 당첨: [${winner}]`, '🎉');
+    showToast(`축하합니다! 🎯 [${winner}] 당첨!`, '🎉');
   }
 };
 
@@ -292,7 +329,7 @@ const TeamShuffler = {
 
 
 /* ==========================================================================
-   3. [완벽 호환] 인터랙티브 사다리 타기 게임 엔진 (LadderGame)
+   3. 인터랙티브 사다리 타기 게임 엔진 (LadderGame)
    ========================================================================== */
 const LadderGame = {
   canvas: null,
@@ -307,21 +344,12 @@ const LadderGame = {
     this.canvas = document.getElementById('ladderCanvas');
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
-
-    // 캔버스 크기 명시적 지정
     this.canvas.width = 560;
     this.canvas.height = 420;
-
-    // 클릭 이벤트 등록
     this.canvas.onclick = (e) => this.handleCanvasClick(e);
-
-    // 기본 생성 실행
     this.generateLadder();
   },
 
-  /**
-   * [사다리 생성하기 버튼 클릭 시 호출]
-   */
   generateLadder() {
     this.canvas = document.getElementById('ladderCanvas');
     if (!this.canvas) return;
@@ -330,7 +358,6 @@ const LadderGame = {
     const playerInput = document.getElementById('ladderPlayers')?.value || '';
     const resultInput = document.getElementById('ladderResults')?.value || '';
 
-    // 입력값 파싱 (쉼표, 줄바꿈)
     let parsedPlayers = playerInput.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
     let parsedResults = resultInput.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
 
@@ -346,12 +373,10 @@ const LadderGame = {
       this.results = ['당첨🎉', '꽝😢', '커피쏘기☕', '벌칙'];
     }
 
-    // 결과 개수와 플레이어 수 맞추기
     while (this.results.length < this.players.length) {
       this.results.push(`결과 ${this.results.length + 1}`);
     }
 
-    // 가로선(발판) 무작위 생성
     this.rungs = [];
     const count = this.players.length;
 
@@ -366,10 +391,7 @@ const LadderGame = {
       }
     }
 
-    // 캔버스 그리기
     this.draw();
-
-    // 상단 버튼 바 갱신
     this.renderPlayerButtons();
 
     const resultText = document.getElementById('ladderResultText');
@@ -380,9 +402,6 @@ const LadderGame = {
     showToast('새로운 사다리가 생성되었습니다!', '🪜');
   },
 
-  /**
-   * 상단 플레이어 버튼 바 렌더링
-   */
   renderPlayerButtons() {
     const container = document.getElementById('ladderPlayerButtons');
     if (!container) return;
@@ -401,9 +420,6 @@ const LadderGame = {
     `;
   },
 
-  /**
-   * 캔버스 클릭 핸들러
-   */
   handleCanvasClick(e) {
     if (this.animating || !this.canvas) return;
     const rect = this.canvas.getBoundingClientRect();
@@ -414,7 +430,6 @@ const LadderGame = {
     const paddingX = 60;
     const colWidth = (this.canvas.width - paddingX * 2) / (count - 1);
 
-    // 상단 플레이어 영역 클릭 감지
     if (clickY <= 85) {
       for (let i = 0; i < count; i++) {
         const x = paddingX + i * colWidth;
@@ -426,9 +441,6 @@ const LadderGame = {
     }
   },
 
-  /**
-   * 사다리 경로 계산 함수
-   */
   calculatePath(playerIndex) {
     const w = this.canvas.width;
     const h = this.canvas.height;
@@ -465,9 +477,6 @@ const LadderGame = {
     return { points, finalCol: currentCol, player: this.players[playerIndex], result: this.results[currentCol] };
   },
 
-  /**
-   * 개별 플레이어 사다리 애니메이션 시작
-   */
   startLadderForPlayer(playerIndex) {
     if (this.animating) return;
     const pathData = this.calculatePath(playerIndex);
@@ -485,9 +494,6 @@ const LadderGame = {
     });
   },
 
-  /**
-   * 전체 사다리 결과 한번에 표시
-   */
   startAll() {
     if (this.animating) return;
     this.draw();
@@ -509,9 +515,6 @@ const LadderGame = {
     showToast('전체 결과가 공개되었습니다!', '✨');
   },
 
-  /**
-   * 부드러운 단일 선 긋기 애니메이션
-   */
   animateSinglePath(points, strokeColor, callback) {
     let currentSegment = 0;
     let progress = 0;
@@ -581,9 +584,6 @@ const LadderGame = {
     this.ctx.stroke();
   },
 
-  /**
-   * 표준 캔버스 렌더링 (호환성 100% 안전 코드)
-   */
   draw() {
     if (!this.canvas || !this.ctx) return;
     const ctx = this.ctx;
@@ -600,11 +600,9 @@ const LadderGame = {
     const colWidth = (w - paddingX * 2) / (count - 1);
     const rowHeight = (h - paddingTop - paddingBottom) / (this.levels + 1);
 
-    // 1. 세로 사다리 기둥 및 텍스트 박스
     for (let i = 0; i < count; i++) {
       const x = paddingX + i * colWidth;
 
-      // 세로선
       ctx.strokeStyle = '#475569';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -612,7 +610,6 @@ const LadderGame = {
       ctx.lineTo(x, h - paddingBottom);
       ctx.stroke();
 
-      // 상단 참가자 이름 박스 (표준 fillRect 사용으로 에러 완전 차단)
       ctx.fillStyle = '#6366f1';
       ctx.fillRect(x - 45, paddingTop - 42, 90, 30);
 
@@ -622,7 +619,6 @@ const LadderGame = {
       const pName = this.players[i].length > 5 ? this.players[i].slice(0, 4) + '..' : this.players[i];
       ctx.fillText(pName, x, paddingTop - 22);
 
-      // 하단 결과 항목 박스
       ctx.fillStyle = '#1e1b4b';
       ctx.fillRect(x - 45, h - paddingBottom + 12, 90, 30);
       ctx.strokeStyle = '#f59e0b';
@@ -635,7 +631,6 @@ const LadderGame = {
       ctx.fillText(rName, x, h - paddingBottom + 32);
     }
 
-    // 2. 가로 사다리 발판
     ctx.strokeStyle = '#818cf8';
     ctx.lineWidth = 4;
     this.rungs.forEach(rung => {
