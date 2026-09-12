@@ -5,7 +5,7 @@
  * 모듈 목록:
  * 1. RouletteGame: 회전 룰렛 (커피 쏘기, 벌칙, 점심 메뉴 등)
  * 2. TeamShuffler: 팀/조 나누기 및 발표 순서 뽑기
- * 3. LadderGame: 인터랙티브 사다리 타기 게임
+ * 3. LadderGame: 실시간 인터랙티브 사다리 타기 애니메이션 & 추적 게임
  */
 
 /* ==========================================================================
@@ -107,7 +107,7 @@ const RouletteGame = {
       ctx.restore();
     }
 
-    // 3. 중앙 중심 핀 원
+    // 3. 중앙 핀 원
     ctx.beginPath();
     ctx.arc(center, center, 32, 0, 2 * Math.PI);
     ctx.fillStyle = '#1e1b4b';
@@ -133,7 +133,6 @@ const RouletteGame = {
     const banner = document.getElementById('rouletteResultBanner');
     if (banner) banner.style.display = 'none';
 
-    // 회전 계산: 기본 5~8바퀴 + 랜덤 각도
     const spinRounds = 5 + Math.random() * 3;
     const totalRotation = spinRounds * 2 * Math.PI + Math.random() * (2 * Math.PI);
     const duration = 4000;
@@ -298,7 +297,7 @@ const TeamShuffler = {
 
 
 /* ==========================================================================
-   3. 인터랙티브 사다리 타기 게임 (LadderGame)
+   3. [완벽 고도화] 인터랙티브 사다리 타기 게임 (LadderGame)
    ========================================================================== */
 const LadderGame = {
   canvas: null,
@@ -306,11 +305,23 @@ const LadderGame = {
   players: [],
   results: [],
   rungs: [],
+  levels: 8,
+  animating: false,
+  highlightPaths: [], // 각 플레이어의 사다리 이동 경로
 
   init() {
     this.canvas = document.getElementById('ladderCanvas');
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
+
+    // 캔버스 클릭 및 모바일 터치 이벤트 리스너 등록
+    this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+    this.canvas.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches[0]) {
+        this.handleCanvasClick(e.touches[0]);
+      }
+    });
+
     this.generateLadder();
   },
 
@@ -334,9 +345,9 @@ const LadderGame = {
 
     this.rungs = [];
     const count = this.players.length;
-    const levels = 8;
 
-    for (let l = 1; l <= levels; l++) {
+    // 가로선(발판) 무작위 생성
+    for (let l = 1; l <= this.levels; l++) {
       for (let c = 0; c < count - 1; c++) {
         if (Math.random() > 0.45) {
           const prevHasRung = this.rungs.some(r => r.level === l && r.col === c - 1);
@@ -347,14 +358,231 @@ const LadderGame = {
       }
     }
 
+    this.highlightPaths = [];
     this.draw();
+
+    // 상단 플레이어 버튼 바 렌더링
+    this.renderPlayerButtons();
+
     const resultText = document.getElementById('ladderResultText');
     if (resultText) {
-      resultText.textContent = `사다리가 준비되었습니다! 상단의 참가자 이름을 확인하세요.`;
+      resultText.innerHTML = `👉 아래 플레이어 버튼이나 캔버스의 이름을 클릭하여 사다리를 타보세요!`;
     }
-    showToast('새로운 사다리가 생성되었습니다!', '🪜');
+    showToast('새로운 사다리가 생성되었습니다! 플레이어를 클릭하세요.', '🪜');
   },
 
+  /**
+   * 플레이어 클릭 버튼 바 렌더링
+   */
+  renderPlayerButtons() {
+    const container = document.getElementById('ladderPlayerButtons');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1rem;">
+        ${this.players.map((p, idx) => `
+          <button class="btn btn-sm btn-gold" onclick="LadderGame.startLadderForPlayer(${idx})">
+            🏃 ${p} 출발!
+          </button>
+        `).join('')}
+        <button class="btn btn-sm btn-primary" onclick="LadderGame.startAll()">
+          ⚡ 전체 결과 한번에 보기
+        </button>
+      </div>
+    `;
+  },
+
+  /**
+   * 캔버스 좌표 클릭 이벤트 핸들러
+   */
+  handleCanvasClick(e) {
+    if (this.animating || !this.canvas) return;
+    const rect = this.canvas.getBoundingClientRect();
+    const clickX = ((e.clientX - rect.left) / rect.width) * this.canvas.width;
+    const clickY = ((e.clientY - rect.top) / rect.height) * this.canvas.height;
+
+    const count = this.players.length;
+    const paddingX = 60;
+    const colWidth = (this.canvas.width - paddingX * 2) / (count - 1);
+
+    // 상단 플레이어 이름 영역 클릭 감지 (Y: 0 ~ 80)
+    if (clickY <= 80) {
+      for (let i = 0; i < count; i++) {
+        const x = paddingX + i * colWidth;
+        if (Math.abs(clickX - x) <= colWidth / 2) {
+          this.startLadderForPlayer(i);
+          return;
+        }
+      }
+    }
+  },
+
+  /**
+   * 특정 플레이어의 사다리 경로 계산
+   */
+  calculatePath(playerIndex) {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const count = this.players.length;
+    const paddingX = 60;
+    const paddingTop = 60;
+    const paddingBottom = 60;
+    const colWidth = (w - paddingX * 2) / (count - 1);
+    const rowHeight = (h - paddingTop - paddingBottom) / (this.levels + 1);
+
+    let currentCol = playerIndex;
+    const points = [];
+
+    // 시작점
+    points.push({ x: paddingX + currentCol * colWidth, y: paddingTop });
+
+    for (let l = 1; l <= this.levels; l++) {
+      const y = paddingTop + l * rowHeight;
+      // 현재 레벨의 Y좌표로 수직 하강
+      points.push({ x: paddingX + currentCol * colWidth, y });
+
+      // 좌우 가로선 확인
+      const rightRung = this.rungs.find(r => r.level === l && r.col === currentCol);
+      const leftRung = this.rungs.find(r => r.level === l && r.col === currentCol - 1);
+
+      if (rightRung) {
+        currentCol++;
+        points.push({ x: paddingX + currentCol * colWidth, y });
+      } else if (leftRung) {
+        currentCol--;
+        points.push({ x: paddingX + currentCol * colWidth, y });
+      }
+    }
+
+    // 바닥 도착점
+    points.push({ x: paddingX + currentCol * colWidth, y: h - paddingBottom });
+
+    return { points, finalCol: currentCol, player: this.players[playerIndex], result: this.results[currentCol] };
+  },
+
+  /**
+   * 단일 플레이어 사다리 타기 실행
+   */
+  startLadderForPlayer(playerIndex) {
+    if (this.animating) return;
+    const pathData = this.calculatePath(playerIndex);
+    this.animating = true;
+
+    showToast(`${pathData.player}님 사다리 출발! 🏃`, '🪜');
+
+    // 애니메이션 실행
+    this.animateSinglePath(pathData.points, '#f43f5e', () => {
+      this.animating = false;
+      const resultText = document.getElementById('ladderResultText');
+      if (resultText) {
+        resultText.innerHTML = `🎉 <strong>[${pathData.player}]</strong>님의 결과 👉 <span style="font-size: 1.25rem; color: var(--accent-gold);">${pathData.result}</span>`;
+      }
+      showToast(`[${pathData.player}] 👉 ${pathData.result}`, '🎉');
+    });
+  },
+
+  /**
+   * 전체 플레이어 사다리 한번에 보기
+   */
+  startAll() {
+    if (this.animating) return;
+    this.draw();
+
+    const colors = ['#f43f5e', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#06b6d4', '#8b5cf6', '#14b8a6'];
+    let summaryHtml = '<div style="margin-top: 0.5rem; text-align: left; background: rgba(15,23,42,0.8); padding: 0.8rem; border-radius: 10px;">';
+
+    this.players.forEach((p, idx) => {
+      const pathData = this.calculatePath(idx);
+      this.drawPathStatic(pathData.points, colors[idx % colors.length]);
+      summaryHtml += `<div style="padding: 0.2rem 0; font-size: 0.92rem;">• <strong>${p}</strong>: <span style="color: var(--accent-gold); font-weight: bold;">${pathData.result}</span></div>`;
+    });
+
+    summaryHtml += '</div>';
+    const resultText = document.getElementById('ladderResultText');
+    if (resultText) {
+      resultText.innerHTML = `🏆 <strong>전체 사다리 결과</strong> ${summaryHtml}`;
+    }
+    showToast('전체 결과가 공개되었습니다!', '✨');
+  },
+
+  /**
+   * 경로를 따라 선을 긋는 부드러운 애니메이션
+   */
+  animateSinglePath(points, strokeColor, callback) {
+    let currentSegment = 0;
+    let progress = 0;
+    const speed = 0.08; // 애니메이션 속도
+
+    const step = () => {
+      if (currentSegment >= points.length - 1) {
+        if (callback) callback();
+        return;
+      }
+
+      const p1 = points[currentSegment];
+      const p2 = points[currentSegment + 1];
+
+      progress += speed;
+      if (progress >= 1) {
+        progress = 0;
+        currentSegment++;
+      }
+
+      // 캔버스 재렌더링
+      this.draw();
+
+      // 지금까지 지나온 선 전체 그리기
+      this.ctx.strokeStyle = strokeColor;
+      this.ctx.lineWidth = 6;
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
+      this.ctx.beginPath();
+      this.ctx.moveTo(points[0].x, points[0].y);
+
+      for (let i = 1; i <= currentSegment; i++) {
+        this.ctx.lineTo(points[i].x, points[i].y);
+      }
+
+      // 현재 진행 중인 세그먼트 선
+      if (currentSegment < points.length - 1) {
+        const currentX = p1.x + (p2.x - p1.x) * progress;
+        const currentY = p1.y + (p2.y - p1.y) * progress;
+        this.ctx.lineTo(currentX, currentY);
+
+        // 달리는 캐릭터 원
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.arc(currentX, currentY, 8, 0, 2 * Math.PI);
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fill();
+        this.ctx.strokeStyle = strokeColor;
+        this.ctx.stroke();
+      } else {
+        this.ctx.stroke();
+      }
+
+      requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  },
+
+  drawPathStatic(points, strokeColor) {
+    this.ctx.strokeStyle = strokeColor;
+    this.ctx.lineWidth = 4;
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+    this.ctx.beginPath();
+    this.ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      this.ctx.lineTo(points[i].x, points[i].y);
+    }
+    this.ctx.stroke();
+  },
+
+  /**
+   * 사다리 기본 그래픽 렌더링
+   */
   draw() {
     if (!this.canvas || !this.ctx) return;
     const ctx = this.ctx;
@@ -369,9 +597,9 @@ const LadderGame = {
     const paddingTop = 60;
     const paddingBottom = 60;
     const colWidth = (w - paddingX * 2) / (count - 1);
-    const rowHeight = (h - paddingTop - paddingBottom) / 9;
+    const rowHeight = (h - paddingTop - paddingBottom) / (this.levels + 1);
 
-    // 세로선 및 참가자/결과
+    // 1. 세로 사다리 기둥
     for (let i = 0; i < count; i++) {
       const x = paddingX + i * colWidth;
 
@@ -382,18 +610,35 @@ const LadderGame = {
       ctx.lineTo(x, h - paddingBottom);
       ctx.stroke();
 
-      ctx.fillStyle = '#f8fafc';
-      ctx.font = 'bold 16px Pretendard, sans-serif';
+      // 상단 참가자 이름 (클릭 유도 배지 스타일)
+      ctx.fillStyle = '#6366f1';
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(x - 45, paddingTop - 42, 90, 30, 8) : ctx.rect(x - 45, paddingTop - 42, 90, 30);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px Pretendard, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(this.players[i], x, paddingTop - 20);
+      const pName = this.players[i].length > 5 ? this.players[i].slice(0, 4) + '..' : this.players[i];
+      ctx.fillText(pName, x, paddingTop - 22);
+
+      // 하단 결과 항목
+      ctx.fillStyle = '#1e1b4b';
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(x - 45, h - paddingBottom + 12, 90, 30, 8) : ctx.rect(x - 45, h - paddingBottom + 12, 90, 30);
+      ctx.fill();
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
 
       ctx.fillStyle = '#f59e0b';
-      ctx.font = 'bold 15px Pretendard, sans-serif';
-      ctx.fillText(this.results[i] || '', x, h - paddingBottom + 30);
+      ctx.font = 'bold 13px Pretendard, sans-serif';
+      const rName = (this.results[i] || '').length > 6 ? this.results[i].slice(0, 5) + '..' : (this.results[i] || '');
+      ctx.fillText(rName, x, h - paddingBottom + 32);
     }
 
-    // 가로선
-    ctx.strokeStyle = '#6366f1';
+    // 2. 가로 사다리 발판
+    ctx.strokeStyle = '#818cf8';
     ctx.lineWidth = 4;
     this.rungs.forEach(rung => {
       const x1 = paddingX + rung.col * colWidth;

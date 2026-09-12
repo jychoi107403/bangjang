@@ -635,9 +635,12 @@
         </div>
 
         <div class="glass-card" style="display: flex; flex-direction: column; align-items: center;">
-          <canvas id="ladderCanvas" width="560" height="420"></canvas>
-          <div id="ladderResultText" style="margin-top: 1rem; font-weight: 700; color: var(--accent-gold); font-size: 1.05rem;">
-            [사다리 생성하기]를 누른 뒤 결과를 확인하세요!
+          <!-- 플레이어 출발 버튼 바 -->
+          <div id="ladderPlayerButtons" style="width: 100%;"></div>
+
+          <canvas id="ladderCanvas" width="560" height="420" style="cursor: pointer;"></canvas>
+          <div id="ladderResultText" style="margin-top: 1rem; font-weight: 700; color: var(--accent-gold); font-size: 1.05rem; text-align: center; width: 100%;">
+            👉 상단의 [출발!] 버튼이나 캔버스 참가자 이름을 클릭하여 사다리를 타보세요!
           </div>
         </div>
       </div>
