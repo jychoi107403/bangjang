@@ -649,22 +649,22 @@
        4. 모달 뷰어 컨테이너 (영수증, 투표, 클래스룸, 내 보관함, 약관)
        ========================================================================== -->
   <!-- 웹 영수증 뷰어 모달 -->
-  <div id="billViewerModal" class="modal-overlay" style="display: none;">
+  <div id="billViewerModal" class="modal-overlay" style="display: none;" onclick="if(event.target===this) BillViewer.closeModal()">
     <div class="modal-container" id="billViewerContent"></div>
   </div>
 
   <!-- 익명 투표/질문함 뷰어 모달 -->
-  <div id="pollViewerModal" class="modal-overlay" style="display: none;">
+  <div id="pollViewerModal" class="modal-overlay" style="display: none;" onclick="if(event.target===this) PollManager.closeModal()">
     <div class="modal-container" id="pollViewerContent"></div>
   </div>
 
   <!-- 미니 클래스룸 뷰어 모달 -->
-  <div id="classViewerModal" class="modal-overlay" style="display: none;">
+  <div id="classViewerModal" class="modal-overlay" style="display: none;" onclick="if(event.target===this) MiniClassroom.closeModal()">
     <div class="modal-container" id="classViewerContent"></div>
   </div>
 
   <!-- [신규] 방장 전용 내 활동 보관함 (My Vault) 모달 -->
-  <div id="vaultModal" class="modal-overlay" style="display: none;">
+  <div id="vaultModal" class="modal-overlay" style="display: none;" onclick="if(event.target===this) BangjangVault.close()">
     <div class="modal-container" style="max-width: 600px;">
       <div class="glass-card" style="background: #1e293b; color: #f8fafc; border-radius: 20px; padding: 1.75rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.85rem; margin-bottom: 1rem;">
@@ -692,7 +692,7 @@
   </div>
 
   <!-- 이용약관 & 개인정보처리방침 모달 (애드센스 승인 필수 요소) -->
-  <div id="policyModal" class="modal-overlay" style="display: none;">
+  <div id="policyModal" class="modal-overlay" style="display: none;" onclick="if(event.target===this) this.style.display='none'">
     <div class="modal-container">
       <div class="glass-card" style="background: #1e293b; color: #f8fafc; border-radius: 20px; padding: 1.75rem;">
         <h3 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; margin-bottom: 1rem;">🔒 개인정보처리방침 및 서비스 이용약관</h3>

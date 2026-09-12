@@ -136,7 +136,7 @@ const RouletteGame = {
     // 회전 계산: 기본 5~8바퀴 + 랜덤 각도
     const spinRounds = 5 + Math.random() * 3;
     const totalRotation = spinRounds * 2 * Math.PI + Math.random() * (2 * Math.PI);
-    const duration = 4000; // 4초 회전
+    const duration = 4000;
     const startTime = performance.now();
     const initialStartAngle = this.startAngle;
 
@@ -144,7 +144,6 @@ const RouletteGame = {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // 부드러운 감속 함수 (cubic-bezier ease-out 유사)
       const easeOut = 1 - Math.pow(1 - progress, 3);
       
       this.startAngle = initialStartAngle + totalRotation * easeOut;
@@ -164,7 +163,6 @@ const RouletteGame = {
   determineWinner() {
     const count = this.items.length;
     const arc = (2 * Math.PI) / count;
-    // 화살표는 상단(3 * Math.PI / 2 또는 270도)에 위치
     const normalizedAngle = (1.5 * Math.PI - (this.startAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
     const winningIndex = Math.floor(normalizedAngle / arc) % count;
     const winner = this.items[winningIndex];
@@ -216,14 +214,12 @@ const TeamShuffler = {
       return;
     }
 
-    // 이름 분리
-    let members = raw.split(/[,\n]+/).map(s => s.trim()).filter(s => s.length > 0);
+    let members = raw.split(/[,\n\s]+/).map(s => s.trim()).filter(s => s.length > 0);
     if (members.length < 2) {
       showToast('최소 2명 이상의 참가자를 입력해주세요.', '⚠️');
       return;
     }
 
-    // 피셔-예이츠 알고리즘으로 무작위 셔플
     for (let i = members.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [members[i], members[j]] = [members[j], members[i]];
@@ -238,7 +234,6 @@ const TeamShuffler = {
     let copyText = `👑 [방장.net] 랜덤 조짜기 / 순서 결과\n━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     if (mode === 'orderOnly') {
-      // 1. 단순 순서 뽑기
       resultHtml = `
         <div class="team-card" style="width: 100%;">
           <div class="team-card-header">
@@ -254,7 +249,6 @@ const TeamShuffler = {
         copyText += `${idx + 1}번째: ${m}\n`;
       });
     } else {
-      // 2. 팀으로 분할
       let teamCount = num;
       if (mode === 'byMemberCount') {
         teamCount = Math.max(1, Math.ceil(members.length / num));
@@ -311,7 +305,7 @@ const LadderGame = {
   ctx: null,
   players: [],
   results: [],
-  rungs: [], // 가로 다리 정보
+  rungs: [],
 
   init() {
     this.canvas = document.getElementById('ladderCanvas');
@@ -326,28 +320,25 @@ const LadderGame = {
     const playerInput = document.getElementById('ladderPlayers')?.value || '';
     const resultInput = document.getElementById('ladderResults')?.value || '';
 
-    this.players = playerInput.split(',').map(s => s.trim()).filter(Boolean);
-    this.results = resultInput.split(',').map(s => s.trim()).filter(Boolean);
+    this.players = playerInput.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
+    this.results = resultInput.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
 
     if (this.players.length < 2) {
       showToast('참가자는 최소 2명 이상이어야 합니다.', '⚠️');
       return;
     }
 
-    // 결과 개수 맞추기
     while (this.results.length < this.players.length) {
       this.results.push(`결과 ${this.results.length + 1}`);
     }
 
-    // 랜덤 가로선(Rungs) 생성
     this.rungs = [];
     const count = this.players.length;
-    const levels = 8; // 사다리 단수
+    const levels = 8;
 
     for (let l = 1; l <= levels; l++) {
       for (let c = 0; c < count - 1; c++) {
-        if (Math.random() > 0.5) {
-          // 인접한 다리가 겹치지 않게 생성
+        if (Math.random() > 0.45) {
           const prevHasRung = this.rungs.some(r => r.level === l && r.col === c - 1);
           if (!prevHasRung) {
             this.rungs.push({ level: l, col: c });
@@ -364,7 +355,7 @@ const LadderGame = {
     showToast('새로운 사다리가 생성되었습니다!', '🪜');
   },
 
-  draw(highlightPath = null) {
+  draw() {
     if (!this.canvas || !this.ctx) return;
     const ctx = this.ctx;
     const w = this.canvas.width;
@@ -380,11 +371,10 @@ const LadderGame = {
     const colWidth = (w - paddingX * 2) / (count - 1);
     const rowHeight = (h - paddingTop - paddingBottom) / 9;
 
-    // 1. 세로선 및 참가자/결과 텍스트
+    // 세로선 및 참가자/결과
     for (let i = 0; i < count; i++) {
       const x = paddingX + i * colWidth;
 
-      // 세로선
       ctx.strokeStyle = '#475569';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -392,19 +382,17 @@ const LadderGame = {
       ctx.lineTo(x, h - paddingBottom);
       ctx.stroke();
 
-      // 상단 참가자 이름
       ctx.fillStyle = '#f8fafc';
       ctx.font = 'bold 16px Pretendard, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(this.players[i], x, paddingTop - 20);
 
-      // 하단 결과 항목
       ctx.fillStyle = '#f59e0b';
       ctx.font = 'bold 15px Pretendard, sans-serif';
       ctx.fillText(this.results[i] || '', x, h - paddingBottom + 30);
     }
 
-    // 2. 가로선 (사다리 발판)
+    // 가로선
     ctx.strokeStyle = '#6366f1';
     ctx.lineWidth = 4;
     this.rungs.forEach(rung => {
