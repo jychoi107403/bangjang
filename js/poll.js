@@ -3,20 +3,24 @@
  * 방장 전용 실시간 익명 투표 & 질문함 컨트롤러 (poll.js)
  * ============================================================================
  * 역할:
- * 1. 객관식 투표 / 익명 질문함(AMA) 1분 만에 개설 및 DB 저장
- * 2. 고유 URL(?poll=UUID) 기반 참여 뷰어 및 실시간 응답 제출
- * 3. 실시간 투표 집계 막대 그래프 및 질문 목록 렌더링
- * 4. 내 보관함 자동 아카이빙
+ * 1. 선택지 무제한 추가/삭제 및 1분 만에 투표/질문 방 개설
+ * 2. 고유 URL(?poll=UUID) 기반 참여 뷰어 & 실시간 투표 집계 막대 그래프
+ * 3. 완전 익명 Q&A 건의함 작성 및 실시간 피드
+ * 4. 내 보관함 및 카카오톡 공유 연동
  */
 
 const PollManager = {
   currentPoll: null,
   currentResponses: [],
+  optionsList: ['금요일 저녁 7시', '토요일 낮 1시', '토요일 저녁 6시'],
 
   init() {
     this.renderOptionInputs();
   },
 
+  /**
+   * 투표 유형 변경 핸들러
+   */
   onTypeChange() {
     const type = document.getElementById('pollTypeSelect')?.value || 'vote';
     const optionsGroup = document.getElementById('pollOptionsGroup');
@@ -31,34 +35,53 @@ const PollManager = {
     }
   },
 
+  /**
+   * 선택지 입력창 렌더링 (삭제 버튼 포함)
+   */
   renderOptionInputs() {
     const container = document.getElementById('pollOptionsContainer');
     if (!container) return;
 
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <input type="text" class="form-input poll-opt" placeholder="선택지 1 (예: 금요일 저녁 7시)">
-        <input type="text" class="form-input poll-opt" placeholder="선택지 2 (예: 토요일 낮 1시)">
-        <input type="text" class="form-input poll-opt" placeholder="선택지 3 (예: 토요일 저녁 6시)">
+      <div id="pollOptionList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+        ${this.optionsList.map((opt, idx) => `
+          <div style="display: flex; gap: 0.4rem; align-items: center;">
+            <input type="text" class="form-input poll-opt" placeholder="선택지 ${idx + 1}" value="${opt}" oninput="PollManager.updateOption(${idx}, this.value)">
+            ${this.optionsList.length > 2 ? `<button type="button" class="btn btn-sm btn-danger-outline" onclick="PollManager.removeOptionInput(${idx})" title="삭제">❌</button>` : ''}
+          </div>
+        `).join('')}
       </div>
     `;
   },
 
-  addOptionInput() {
-    const container = document.getElementById('pollOptionsContainer');
-    if (!container) return;
-
-    const div = container.querySelector('div');
-    if (!div) return;
-
-    const count = div.querySelectorAll('.poll-opt').length + 1;
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'form-input poll-opt';
-    input.placeholder = `선택지 ${count}`;
-    div.appendChild(input);
+  updateOption(index, value) {
+    this.optionsList[index] = value;
   },
 
+  /**
+   * 선택지 1개 추가 (+ 버튼 클릭 시)
+   */
+  addOptionInput() {
+    this.optionsList.push(`선택지 ${this.optionsList.length + 1}`);
+    this.renderOptionInputs();
+    showToast(`선택지 ${this.optionsList.length} 항목이 추가되었습니다!`, '➕');
+  },
+
+  /**
+   * 선택지 1개 삭제
+   */
+  removeOptionInput(index) {
+    if (this.optionsList.length <= 2) {
+      showToast('객관식 투표는 최소 2개 이상의 선택지가 필요합니다.', '⚠️');
+      return;
+    }
+    this.optionsList.splice(index, 1);
+    this.renderOptionInputs();
+  },
+
+  /**
+   * [방 개설 & 링크 생성]
+   */
   async createPoll() {
     const title = (document.getElementById('pollTitleInput')?.value || '').trim();
     const desc = (document.getElementById('pollDescInput')?.value || '').trim();
@@ -77,12 +100,12 @@ const PollManager = {
       });
 
       if (options.length < 2) {
-        showToast('객관식 투표는 최소 2개 이상의 선택지가 필요합니다.', '⚠️');
+        showToast('객관식 투표는 최소 2개 이상의 유효한 선택지가 필요합니다.', '⚠️');
         return;
       }
     }
 
-    showToast('새로운 투표/질문 방을 생성하는 중...', '⏳');
+    showToast('클라우드에 투표 방을 생성하는 중...', '⏳');
 
     try {
       const pollId = await BangjangDB.createPoll({
@@ -94,19 +117,23 @@ const PollManager = {
 
       // 내 보관함에 아카이빙
       if (window.BangjangVault) {
-        BangjangVault.add('poll', pollId, title, type === 'vote' ? '객관식 투표' : '익명 Q&A');
+        BangjangVault.add('poll', pollId, title, type === 'vote' ? `객관식 투표 (${options.length}개 선택지)` : '익명 Q&A 건의함');
       }
 
       const shareUrl = `${window.location.origin}${window.location.pathname}?poll=${pollId}`;
-      await copyToClipboardHelper(shareUrl, '투표함 링크가 생성 & 복사되었습니다! 카톡에 공유하세요.');
+      await copyToClipboardHelper(shareUrl, '🎉 투표함 링크가 생성 & 복사되었습니다! 카톡에 공유해보세요.');
 
+      // 바로 실시간 투표 뷰어 모달 열기
       this.loadPoll(pollId);
     } catch (err) {
       console.error('투표함 생성 실패:', err);
-      showToast('투표함 생성에 실패했습니다.', '❌');
+      showToast('투표함 생성에 실패했습니다. DB 연결을 확인해주세요.', '❌');
     }
   },
 
+  /**
+   * [실시간 뷰어 로드]
+   */
   async loadPoll(pollId) {
     const modal = document.getElementById('pollViewerModal');
     const content = document.getElementById('pollViewerContent');
@@ -115,8 +142,8 @@ const PollManager = {
     modal.style.display = 'flex';
     content.innerHTML = `
       <div style="text-align: center; padding: 3rem 1rem;">
-        <div style="font-size: 2rem; margin-bottom: 1rem; animation: spin 1s infinite linear;">🗳️</div>
-        <p style="color: var(--text-muted);">투표 데이터를 실시간으로 불러오는 중...</p>
+        <div style="font-size: 2.5rem; margin-bottom: 1rem; animation: pulse 1s infinite;">🗳️</div>
+        <p style="color: var(--text-muted); font-size: 1rem;">실시간 투표 데이터를 안전하게 불러오는 중...</p>
       </div>
     `;
 
@@ -130,13 +157,17 @@ const PollManager = {
       content.innerHTML = `
         <div style="text-align: center; padding: 2.5rem 1rem;">
           <div style="font-size: 2.5rem; margin-bottom: 0.8rem;">⚠️</div>
-          <h3 style="font-size: 1.2rem;">투표를 찾을 수 없습니다.</h3>
+          <h3 style="font-size: 1.2rem; color: #ffffff;">투표를 찾을 수 없습니다.</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.3rem;">링크가 만료되었거나 잘못된 주소입니다.</p>
           <button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="PollManager.closeModal()">홈으로 돌아가기</button>
         </div>
       `;
     }
   },
 
+  /**
+   * [실시간 참여 뷰어 화면 렌더링]
+   */
   renderViewer(poll, responses) {
     const content = document.getElementById('pollViewerContent');
     if (!content) return;
@@ -144,6 +175,7 @@ const PollManager = {
     const isVote = poll.poll_type === 'vote';
     const totalCount = responses.length;
 
+    // 투표 집계 계산
     const counts = {};
     if (isVote && Array.isArray(poll.options)) {
       poll.options.forEach(opt => counts[opt] = 0);
@@ -155,20 +187,22 @@ const PollManager = {
     }
 
     let html = `
-      <div class="glass-card" style="background: #1e293b; color: #f8fafc; border-radius: 20px; padding: 1.75rem;">
+      <div class="glass-card" style="background: #1e293b; color: #f8fafc; border-radius: 20px; padding: 1.75rem; box-shadow: 0 10px 35px rgba(0,0,0,0.5);">
+        <!-- 상단 헤더 -->
         <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="badge-new" style="background: var(--primary);">${isVote ? '🗳️ 익명 투표' : '💬 익명 건의/질문함'}</span>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">총 ${totalCount}명 참여</span>
+            <span class="badge-new" style="background: var(--primary);">${isVote ? '🗳️ 실시간 익명 투표' : '💬 익명 건의 & 질문함'}</span>
+            <span style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 800;">총 ${totalCount}명 참여 중</span>
           </div>
           <h2 style="font-size: 1.35rem; font-weight: 800; margin-top: 0.5rem; color: #ffffff;">${poll.title}</h2>
-          ${poll.description ? `<p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.3rem;">${poll.description}</p>` : ''}
+          ${poll.description ? `<p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.3rem;">📢 ${poll.description}</p>` : ''}
         </div>
 
+        <!-- 1. 객관식 투표 영역 -->
         ${isVote ? `
           <div style="margin-bottom: 1.5rem;">
             <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 0.8rem;">
-              👉 원하는 항목을 클릭하여 바로 투표하세요!
+              👉 원하는 항목을 클릭하면 1초 만에 즉시 투표됩니다!
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
               ${(poll.options || []).map(opt => {
@@ -176,12 +210,15 @@ const PollManager = {
                 const percent = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
                 return `
                   <div 
-                    style="position: relative; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.85rem 1rem; cursor: pointer; overflow: hidden; transition: all 0.2s;"
+                    style="position: relative; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 0.9rem 1.1rem; cursor: pointer; overflow: hidden; transition: all 0.2s;"
+                    onmouseover="this.style.borderColor='var(--primary)'"
+                    onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'"
                     onclick="PollManager.submitVote('${opt.replace(/'/g, "\\'")}')">
-                    <div style="position: absolute; top: 0; left: 0; bottom: 0; width: ${percent}%; background: rgba(99, 102, 241, 0.25); z-index: 1;"></div>
+                    <!-- 투표 득표율 막대 배경 게이지 -->
+                    <div style="position: absolute; top: 0; left: 0; bottom: 0; width: ${percent}%; background: linear-gradient(90deg, rgba(99, 102, 241, 0.4), rgba(99, 102, 241, 0.2)); z-index: 1; transition: width 0.5s ease;"></div>
                     <div style="position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem;">
-                      <span style="font-weight: 600;">${opt}</span>
-                      <span style="font-size: 0.85rem; font-weight: 800; color: var(--accent-gold);">${count}표 (${percent}%)</span>
+                      <span style="font-weight: 700; color: #f8fafc;">${opt}</span>
+                      <span style="font-size: 0.9rem; font-weight: 900; color: var(--accent-gold);">${count}표 (${percent}%)</span>
                     </div>
                   </div>
                 `;
@@ -189,6 +226,7 @@ const PollManager = {
             </div>
           </div>
         ` : `
+          <!-- 2. 익명 Q&A 질문/건의 작성 영역 -->
           <div style="margin-bottom: 1.5rem;">
             <div class="form-group">
               <label class="form-label">익명으로 질문 또는 한마디 남기기</label>
@@ -199,12 +237,13 @@ const PollManager = {
             </button>
           </div>
 
+          <!-- 등록된 질문/메시지 목록 -->
           <div>
             <h4 style="font-size: 0.92rem; color: var(--text-muted); margin-bottom: 0.6rem;">💬 등록된 익명 메시지 (${responses.length}개)</h4>
             <div style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;">
               ${responses.length === 0 ? '<p style="font-size: 0.85rem; color: var(--text-sub); text-align: center; padding: 1rem;">아직 등록된 메시지가 없습니다. 첫 번째로 작성해보세요!</p>' : ''}
               ${responses.map(r => `
-                <div style="background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 0.75rem 0.9rem; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 0.75rem 0.9rem; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.05); white-space: pre-wrap;">
                   ${r.content}
                 </div>
               `).join('')}
@@ -212,9 +251,10 @@ const PollManager = {
           </div>
         `}
 
+        <!-- 하단 공유 및 닫기 버튼 -->
         <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
           <button class="btn btn-secondary" style="flex: 1;" onclick="PollManager.closeModal()">닫기</button>
-          <button class="btn btn-gold" style="flex: 2;" onclick="PollManager.shareLink()">🔗 투표 링크 복사</button>
+          <button class="btn btn-gold" style="flex: 2;" onclick="PollManager.shareLink()">🔗 카카오톡/링크 공유</button>
         </div>
       </div>
     `;
@@ -222,18 +262,24 @@ const PollManager = {
     content.innerHTML = html;
   },
 
+  /**
+   * 객관식 투표 제출
+   */
   async submitVote(choice) {
     if (!this.currentPoll) return;
     try {
       await BangjangDB.submitPollResponse(this.currentPoll.id, choice, null);
-      showToast(`'${choice}'에 투표 완료되었습니다!`, '🎉');
-      this.loadPoll(this.currentPoll.id);
+      showToast(`'${choice}'에 투표 완료되었습니다! 🗳️`, '🎉');
+      this.loadPoll(this.currentPoll.id); // 실시간 재조회 및 그래프 업데이트
     } catch (err) {
       console.error('투표 제출 실패:', err);
       showToast('투표 제출에 실패했습니다.', '⚠️');
     }
   },
 
+  /**
+   * 익명 Q&A 질문 등록
+   */
   async submitQna() {
     if (!this.currentPoll) return;
     const content = (document.getElementById('qnaContentInput')?.value || '').trim();
@@ -252,6 +298,9 @@ const PollManager = {
     }
   },
 
+  /**
+   * 링크 공유
+   */
   shareLink() {
     if (!this.currentPoll) return;
     const url = `${window.location.origin}${window.location.pathname}?poll=${this.currentPoll.id}`;
@@ -262,6 +311,9 @@ const PollManager = {
     }
   },
 
+  /**
+   * 모달 닫기
+   */
   closeModal() {
     const modal = document.getElementById('pollViewerModal');
     if (modal) modal.style.display = 'none';
